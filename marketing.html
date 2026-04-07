@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마케팅 일정 캘린더</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00704A;
+    --green-light: #CBA258;
+    --cream: #F9F3E8;
+    --dark: #1a1a1a;
+    --mid: #4a4a4a;
+    --soft: #e8e0d0;
+    --accent: #E8112D;
+    --sky: #6dbfb8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--green);
+    color: white;
+    padding: 28px 40px 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  }
+
+  header .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 2px;
+    color: var(--green-light);
+  }
+
+  header .divider { width: 1px; height: 32px; background: rgba(255,255,255,0.3); }
+
+  header .title-block h1 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: white;
+  }
+  header .title-block p {
+    font-size: 0.72rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.65);
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── MONTH LABEL ── */
+  .month-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: var(--green);
+    letter-spacing: 3px;
+    line-height: 1;
+    margin-bottom: 4px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.5s forwards;
+  }
+  .month-sub {
+    font-size: 0.75rem;
+    font-weight: 300;
+    color: var(--mid);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.1s forwards;
+  }
+
+  /* ── CALENDAR GRID ── */
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 48px;
+  }
+
+  .day-header {
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--mid);
+    padding: 6px 0;
+    text-transform: uppercase;
+  }
+  .day-header.sun { color: var(--accent); }
+  .day-header.sat { color: var(--sky); }
+
+  .day-cell {
+    background: white;
+    border-radius: 10px;
+    min-height: 88px;
+    padding: 8px;
+    position: relative;
+    border: 1.5px solid transparent;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    opacity: 0;
+    animation: fadeUp 0.4s forwards;
+  }
+  .day-cell:hover { border-color: var(--green); box-shadow: 0 4px 16px rgba(0,112,74,0.12); }
+
+  .day-cell.empty { background: transparent; border: none; cursor: default; }
+  .day-cell.empty:hover { border-color: transparent; box-shadow: none; }
+
+  .day-cell.today { border-color: var(--green); }
+  .day-cell.today .day-num { background: var(--green); color: white; }
+
+  .day-cell.has-event { border-color: var(--green-light); }
+
+  .day-num {
+    font-size: 0.78rem;
+    font-weight: 700;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .day-cell.sun .day-num { color: var(--accent); }
+  .day-cell.sat .day-num { color: var(--sky); }
+
+  /* ── EVENT CHIPS ── */
+  .event-chip {
+    font-size: 0.6rem;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    line-height: 1.4;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity 0.15s;
+  }
+  .event-chip:hover { opacity: 0.8; }
+
+  .chip-promo    { background: #E6F4EE; color: var(--green); border-left: 3px solid var(--green); }
+  .chip-food     { background: #FEF3CD; color: #8a6200; border-left: 3px solid var(--green-light); }
+  .chip-md       { background: #FDE8EA; color: #b0001a; border-left: 3px solid var(--accent); }
+  .chip-delivery { background: #E3F5F4; color: #1a6e68; border-left: 3px solid var(--sky); }
+  .chip-return   { background: #F0EBF8; color: #5a2d8a; border-left: 3px solid #9b59d0; }
+  .chip-sample   { background: #FFF0E8; color: #8a3e00; border-left: 3px solid #e87020; }
+
+  /* ── DETAIL PANEL ── */
+  .detail-section {
+    margin-top: 12px;
+  }
+
+  .detail-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 1.5px;
+    color: var(--green);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--soft);
+  }
+
+  .detail-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .detail-card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    border-left: 4px solid var(--green);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    opacity: 0;
+    animation: fadeUp 0.5s forwards;
+  }
+  .detail-card.food   { border-left-color: var(--green-light); }
+  .detail-card.md     { border-left-color: var(--accent); }
+  .detail-card.logistics { border-left-color: var(--sky); }
+
+  .detail-card .card-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 6px;
+  }
+  .detail-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .detail-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .detail-card ul li {
+    font-size: 0.78rem;
+    color: var(--mid);
+    padding: 5px 0;
+    border-bottom: 1px solid var(--soft);
+    display: flex;
+    gap: 8px;
+    line-height: 1.5;
+  }
+  .detail-card ul li:last-child { border-bottom: none; }
+  .detail-card ul li .li-dot {
+    color: var(--green);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .tag {
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: var(--soft);
+    color: var(--mid);
+    font-weight: 500;
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding: 14px 18px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--mid);
+    font-weight: 500;
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* stagger cells */
+  .day-cell:nth-child(1)  { animation-delay: 0.02s }
+  .day-cell:nth-child(2)  { animation-delay: 0.04s }
+  .day-cell:nth-child(3)  { animation-delay: 0.06s }
+  .day-cell:nth-child(4)  { animation-delay: 0.08s }
+  .day-cell:nth-child(5)  { animation-delay: 0.10s }
+  .day-cell:nth-child(6)  { animation-delay: 0.12s }
+  .day-cell:nth-child(7)  { animation-delay: 0.14s }
+  .day-cell:nth-child(8)  { animation-delay: 0.16s }
+  .day-cell:nth-child(9)  { animation-delay: 0.18s }
+  .day-cell:nth-child(10) { animation-delay: 0.20s }
+  .day-cell:nth-child(11) { animation-delay: 0.22s }
+  .day-cell:nth-child(12) { animation-delay: 0.24s }
+  .day-cell:nth-child(13) { animation-delay: 0.26s }
+  .day-cell:nth-child(14) { animation-delay: 0.28s }
+  .day-cell:nth-child(15) { animation-delay: 0.30s }
+  .day-cell:nth-child(16) { animation-delay: 0.32s }
+  .day-cell:nth-child(17) { animation-delay: 0.34s }
+  .day-cell:nth-child(18) { animation-delay: 0.36s }
+  .day-cell:nth-child(19) { animation-delay: 0.38s }
+  .day-cell:nth-child(20) { animation-delay: 0.40s }
+  .day-cell:nth-child(21) { animation-delay: 0.42s }
+  .day-cell:nth-child(22) { animation-delay: 0.44s }
+  .day-cell:nth-child(23) { animation-delay: 0.46s }
+  .day-cell:nth-child(24) { animation-delay: 0.48s }
+  .day-cell:nth-child(25) { animation-delay: 0.50s }
+  .day-cell:nth-child(26) { animation-delay: 0.52s }
+  .day-cell:nth-child(27) { animation-delay: 0.54s }
+  .day-cell:nth-child(28) { animation-delay: 0.56s }
+  .day-cell:nth-child(29) { animation-delay: 0.58s }
+  .day-cell:nth-child(30) { animation-delay: 0.60s }
+  .day-cell:nth-child(31) { animation-delay: 0.62s }
+  .day-cell:nth-child(32) { animation-delay: 0.64s }
+  .day-cell:nth-child(33) { animation-delay: 0.66s }
+  .day-cell:nth-child(34) { animation-delay: 0.68s }
+  .day-cell:nth-child(35) { animation-delay: 0.70s }
+
+  .detail-card:nth-child(1) { animation-delay: 0.1s }
+  .detail-card:nth-child(2) { animation-delay: 0.2s }
+  .detail-card:nth-child(3) { animation-delay: 0.3s }
+  .detail-card:nth-child(4) { animation-delay: 0.4s }
+  .detail-card:nth-child(5) { animation-delay: 0.5s }
+  .detail-card:nth-child(6) { animation-delay: 0.6s }
+
+  .date-link {
+    cursor: pointer;
+    border-bottom: 1px dashed var(--green);
+    color: var(--green);
+    transition: opacity 0.15s;
+  }
+  .date-link:hover { opacity: 0.7; }
+
+  .category-divider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0 4px;
+  }
+  .category-divider span {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: var(--green);
+    white-space: nowrap;
+  }
+  .category-divider::after {
+    content: '';
+    flex: 1;
+    height: 1.5px;
+    background: var(--soft);
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 18px 20px; }
+    main { padding: 24px 12px 60px; }
+    .month-label { font-size: 2.6rem; }
+    .day-cell { min-height: 60px; padding: 5px; }
+    .event-chip { font-size: 0.52rem; }
+    .detail-cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">STARBUCKS</div>
+  <div class="divider"></div>
+  <div class="title-block">
+    <h1>마케팅 일정 캘린더</h1>
+    <p>2026 SPRING 1 · KBO PROMOTION</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── LEGEND ── -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#00704A"></div> 프로모션</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#CBA258"></div> 푸드·음료</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E8112D"></div> MD</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6dbfb8"></div> 배송·입고</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9b59d0"></div> 반품</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e87020"></div> 샘플</div>
+  </div>
+
+  <!-- ══════════ MARCH ══════════ -->
+  <div class="month-label">MARCH</div>
+  <div class="month-sub">2026년 3월</div>
+
+  <div class="calendar-grid">
+    <!-- Headers -->
+    <div class="day-header sun">일</div>
+    <div class="day-header">월</div>
+    <div class="day-header">화</div>
+    <div class="day-header">수</div>
+    <div class="day-header">목</div>
+    <div class="day-header">금</div>
+    <div class="day-header sat">토</div>
+
+    <!-- Week 1: Mar 1(일)~7(토) -->
+    <div class="day-cell sun" id="mar-1"><div class="day-num">1</div></div>
+    <div class="day-cell" id="mar-2"><div class="day-num">2</div></div>
+    <div class="day-cell" id="mar-3"><div class="day-num">3</div></div>
+    <div class="day-cell" id="mar-4"><div class="day-num">4</div></div>
+    <div class="day-cell" id="mar-5"><div class="day-num">5</div></div>
+    <div class="day-cell" id="mar-6"><div class="day-num">6</div></div>
+    <div class="day-cell sat" id="mar-7"><div class="day-num">7</div></div>
+
+    <!-- Week 2: 8~14 -->
+    <div class="day-cell sun" id="mar-8"><div class="day-num">8</div></div>
+    <div class="day-cell" id="mar-9"><div class="day-num">9</div></div>
+    <div class="day-cell" id="mar-10"><div class="day-num">10</div></div>
+    <div class="day-cell" id="mar-11"><div class="day-num">11</div></div>
+    <div class="day-cell" id="mar-12"><div class="day-num">12</div></div>
+    <div class="day-cell" id="mar-13"><div class="day-num">13</div></div>
+    <div class="day-cell sat" id="mar-14"><div class="day-num">14</div></div>
+
+    <!-- Week 3: 15~21 -->
+    <div class="day-cell sun" id="mar-15"><div class="day-num">15</div></div>
+    <!-- 3/16 체리블라썸 출시 -->
+    <div class="day-cell has-event" id="mar-16"><div class="day-num">16</div>
+      <div class="event-chip chip-food" data-target="card-beverage">🌸 [Spring1] 체리블라썸 백도 출시</div>
+    </div>
+    <div class="day-cell" id="mar-17"><div class="day-num">17</div></div>
+    <div class="day-cell" id="mar-18"><div class="day-num">18</div></div>
+    <div class="day-cell" id="mar-19"><div class="day-num">19</div></div>
+    <div class="day-cell" id="mar-20"><div class="day-num">20</div></div>
+    <div class="day-cell sat" id="mar-21"><div class="day-num">21</div></div>
+
+    <!-- Week 4: 22~28 -->
+    <div class="day-cell sun has-event" id="mar-22"><div class="day-num">22</div>
+      <div class="event-chip chip-delivery" data-target="card-frozen-cake">❄️ [초콜릿크런치케이크] 일괄입고 시작</div>
+    </div>
+    <!-- 3/23 반품시작 + 파트너샘플 -->
+    <div class="day-cell today has-event" id="mar-23"><div class="day-num">23</div>
+      <div class="event-chip chip-return" data-target="card-logistics">[KBO MD] 반품 시작</div>
+      <div class="event-chip chip-sample" data-target="card-food">🧾 [KBO] 파트너 샘플 배포</div>
+      <div class="event-chip chip-food" data-target="card-evening">🌙 [저녁할인] 푸드 20% 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-pistachio">🥜 [피스타치오] 부재료 일괄발주 시작</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🖼️ [피스타치오] CC 입고</div>
+      <div class="event-chip chip-delivery" data-target="card-frozen-bread">❄️ [냉동브레드] 일괄입고 시작</div>
+    </div>
+    <div class="day-cell has-event" id="mar-24"><div class="day-num">24</div>
+      <div class="event-chip chip-delivery" data-target="card-logistics">🍵 [제주녹차] 발주 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-pistachio">🥜 [피스타치오] 부재료 일괄발주 마감</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🖼️ [피스타치오] 포스터 입고</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🖼️ [피스타치오] CC 게시 시작 (~4/7)</div>
+      <div class="event-chip chip-delivery" data-target="card-levdeux">🥐 [레브두] 자율발주 시작 · 비주얼 입고</div>
+    </div>
+    <!-- 3/25 자율발주 시작 -->
+    <div class="day-cell has-event" id="mar-25"><div class="day-num">25</div>
+      <div class="event-chip chip-delivery" data-target="card-logistics">📦 [매실 그린티] 신규 원부재료 자율발주 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-pistachio">🥜 [피스타치오] 부재료 자율발주 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-pistachio">🥜 [피스타치오] Core 원부재료 발주</div>
+      <div class="event-chip chip-delivery" data-target="card-keyring">⚾ [야구공키링] 증정품 입고 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-chai">🍵 [차이티라떼] 부재료 일괄발주 시작</div>
+    </div>
+    <!-- 3/26 반품마감 + 스태카 1차 입고 -->
+    <div class="day-cell has-event" id="mar-26"><div class="day-num">26</div>
+      <div class="event-chip chip-return" data-target="card-logistics">[KBO MD] 반품 마감 17:50</div>
+      <div class="event-chip chip-delivery" data-target="card-keyring">⚾ [야구공키링] 증정품 입고 마감</div>
+      <div class="event-chip chip-delivery" data-target="card-chai">🍵 [차이티라떼] 부재료 일괄발주 마감</div>
+      <div class="event-chip chip-delivery" data-target="card-bundle">🎒 [꾸러미백] 일괄입고 시작</div>
+      <div class="event-chip chip-food" data-target="card-levdeux">🥐 [레브두] 피스타치오 크루아상 출시</div>
+      <div class="event-chip chip-delivery" data-target="card-frozen-bread">❄️ [냉동브레드] 명표 입고 시작</div>
+      <div class="event-chip chip-md" data-target="card-dubai">⛔ [두바이 초콜릿] 음료 2종 판매 종료</div>
+      <div class="event-chip chip-return" data-target="card-seoul">🖼️ [서울특화] CC 게시 종료</div>
+      <div class="event-chip chip-delivery" data-target="card-stacka">📦 [스태카] 1차 입고</div>
+    </div>
+    <!-- 3/27 프로모션 시작 + MD 이커머스 오픈 -->
+    <div class="day-cell has-event" id="mar-27"><div class="day-num">27</div>
+      <div class="event-chip chip-promo" data-target="card-kbo-promo">🎯 [KBO Spring1] 프로모션 시작</div>
+      <div class="event-chip chip-promo" data-target="card-keyring">⚾ [야구공키링] 이벤트 시작</div>
+      <div class="event-chip chip-promo" data-target="card-landers-online">🛒 [랜쇼페] 온라인 행사 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-chai">🍵 [차이티라떼] 부재료 자율발주 시작</div>
+      <div class="event-chip chip-promo" data-target="card-dresscode">⚾ [드레스코드] KBO 유니폼 착용 시작</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [블루베리부생카] 마지막 발주일</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [블루베리부생카] 마지막 발주일</div>
+      <div class="event-chip chip-md" data-target="card-md">[KBO MD] 이커머스 오픈 10시</div>
+      <div class="event-chip chip-md" data-target="card-md">🗺️ [KBO MD] 판매매장 연고지 운영</div>
+      <div class="event-chip chip-delivery" data-target="card-stacka">🪴 [스태카] 미운영매장 진열 판매</div>
+      <div class="event-chip chip-food" data-target="card-butter">🧈 [쫀득버터바이트] 비주얼 보관 (4/4 게시)</div>
+      <div class="event-chip chip-delivery" data-target="card-frozen-bread">❄️ [냉동브레드] 명표 입고 마감</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🥜 [피스타치오] 음료 2종 출시</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🖼️ [피스타치오] 포스터 게시 시작 (~3/31)</div>
+      <div class="event-chip chip-promo" data-target="card-tristar">⭐ [Tri-Star] 이벤트 시작</div>
+    </div>
+    <div class="day-cell sat has-event" id="mar-28"><div class="day-num">28</div>
+      <div class="event-chip chip-food" data-target="card-butter">🧈 [쫀득버터바이트] 비주얼 보관 (4/4 게시)</div>
+    </div>
+
+    <!-- Week 5: 29~31 -->
+    <div class="day-cell sun has-event" id="mar-29"><div class="day-num">29</div>
+      <div class="event-chip chip-return" data-target="card-butter">⚠️ [쫀득버터바이트] 발주 결품처리 예정</div>
+      <div class="event-chip chip-delivery" data-target="card-frozen-bread">❄️ [냉동브레드] 일괄입고 마감</div>
+    </div>
+    <div class="day-cell has-event" id="mar-30"><div class="day-num">30</div>
+      <div class="event-chip chip-delivery" data-target="card-magazine">📰 [4월 잡지] 자율발주 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-sandwich-event">🥪 [베이컨시저] 발주 증량 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-cow">☕ [COW] 하우스블렌드 자율발주 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-frozen-cake">❄️ [초콜릿크런치케이크] 일괄입고 마감</div>
+      <div class="event-chip chip-food" data-target="card-thaw-prep">🌡️ [냉동브레드 2종] 해동 시작 (3/31 출시 전)</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [블루베리부생카] 마지막 판매일</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [블랙사파이어] 마지막 입고일</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [블루베리부생카] 마지막 판매일</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [블랙사파이어] 마지막 입고일</div>
+      <div class="event-chip chip-food" data-target="card-thaw-prep">🌡️ [초콜릿크런치케이크] 해동 시작 (3/31 출시 전)</div>
+    </div>
+    <div class="day-cell has-event" id="mar-31"><div class="day-num">31</div>
+      <div class="event-chip chip-food" data-target="card-evening">🌙 [저녁할인] 푸드 20% 종료</div>
+      <div class="event-chip chip-return" data-target="card-butter">🧈 [쫀득버터바이트] 출시 연기 → 4/4 확정</div>
+      <div class="event-chip chip-return" data-target="card-keyring">⚾ [야구공키링] 이벤트 종료</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [블랙사파이어] 마지막 판매일</div>
+      <div class="event-chip chip-food" data-target="card-sandwich-ext">🥪 [샌드위치] 소비기한 2일 연장 적용</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [블랙사파이어] 마지막 판매일</div>
+      <div class="event-chip chip-food" data-target="card-sandwich-ext">🥪 [샌드위치] 소비기한 2일 연장 적용</div>
+      <div class="event-chip chip-food" data-target="card-frozen-bread">❄️ [냉동브레드 2종] 출시</div>
+      <div class="event-chip chip-food" data-target="card-frozen-cake">❄️ [초콜릿크런치케이크] 출시</div>
+      <div class="event-chip chip-delivery" data-target="card-frozen-bread">📦 [냉동브레드] 자율발주 시작</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🖼️ [피스타치오] 포스터 게시 종료</div>
+    </div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+  </div>
+
+  <!-- ══════════ APRIL ══════════ -->
+  <div class="month-label" style="animation-delay:0.15s">APRIL</div>
+  <div class="month-sub" style="animation-delay:0.25s">2026년 4월</div>
+
+  <div class="calendar-grid">
+    <div class="day-header sun">일</div>
+    <div class="day-header">월</div>
+    <div class="day-header">화</div>
+    <div class="day-header">수</div>
+    <div class="day-header">목</div>
+    <div class="day-header">금</div>
+    <div class="day-header sat">토</div>
+
+    <!-- April 1 = 수요일 -->
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell has-event" id="apr-1"><div class="day-num">1</div>
+      <div class="event-chip chip-promo" data-target="card-kbo-promo">[KBO Spring1] 진행중</div>
+      <div class="event-chip chip-delivery" data-target="card-dairy">🥛 [유제품] 매장별 SKU 변경 발주 시작</div>
+      <div class="event-chip chip-promo" data-target="card-sandwich-event">🥪 [이달의샌드위치] 이벤트 시작 (1종)</div>
+      <div class="event-chip chip-promo" data-target="card-foodbag">🛍️ [푸드백] 증정 이벤트 시작</div>
+      <div class="event-chip chip-promo" data-target="card-roastery">☕ [원두/비아] 2+1 이벤트 시작</div>
+      <div class="event-chip chip-food" data-target="card-chai">🍵 [차이티라떼] 출시 + 선착순 무료 증정</div>
+      <div class="event-chip chip-promo" data-target="card-landers-online">🛒 [랜쇼페] 온라인 추가행사 시작</div>
+    </div>
+    <div class="day-cell" id="apr-2"><div class="day-num">2</div></div>
+    <div class="day-cell has-event" id="apr-3"><div class="day-num">3</div>
+      <div class="event-chip chip-delivery" data-target="card-stacka">📦 [스태카] 2차 입고 (일부매장)</div>
+      <div class="event-chip chip-delivery" data-target="card-cake-label">🏷️ [코어케이크] 명표 입고 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-butter">🧈 [쫀득버터바이트] 자율발주 시작</div>
+    </div>
+    <div class="day-cell sat has-event" id="apr-4"><div class="day-num">4</div>
+      <div class="event-chip chip-delivery" data-target="card-cake-label">🏷️ [코어케이크] 명표 입고 마감</div>
+      <div class="event-chip chip-food" data-target="card-butter">🧈 [쫀득버터바이트] 출시 · 비주얼 게시</div>
+    </div>
+
+    <!-- Week 2: 5~11 -->
+    <div class="day-cell sun" id="apr-5"><div class="day-num">5</div></div>
+    <div class="day-cell has-event" id="apr-6"><div class="day-num">6</div>
+      <div class="event-chip chip-delivery" data-target="card-cow">☕ [COW] 하우스/베란다블렌드 전환</div>
+      <div class="event-chip chip-return" data-target="card-humidifier">🔔 [가습기 리콜] 매장 반납 접수 시작</div>
+    </div>
+    <div class="day-cell has-event" id="apr-7"><div class="day-num">7</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🖼️ [피스타치오] CC 게시 종료</div>
+      <div class="event-chip chip-promo" data-target="card-cake-label">🏷️ [코어케이크] 신규 명표 교체 적용</div>
+      <div class="event-chip chip-return" data-target="card-food-ops">🥚 [카스텔라크림에그] 소비기한 1일로 단축</div>
+    </div>
+    <div class="day-cell has-event" id="apr-8"><div class="day-num">8</div>
+      <div class="event-chip chip-return" data-target="card-butter">⚠️ [쫀득버터바이트] 발주 수량 조정 필요</div>
+      <div class="event-chip chip-promo" data-target="card-silicon-bag">🛍️ [실리콘푸드백] 이벤트 시작</div>
+
+      <div class="event-chip chip-sample" data-target="card-spring2-food">🧾 [Spring2] 버즈케이크·말차티라미수 파트너샘플</div>
+      <div class="event-chip chip-delivery" data-target="card-bundle-label">🏷️ [꾸러미·파예] 명표 입고 시작</div>
+    </div>
+    <div class="day-cell has-event" id="apr-9"><div class="day-num">9</div>
+      <div class="event-chip chip-sample" data-target="card-spring2-food">🧾 [Spring2] 말차둥둥베어리 파트너샘플</div>
+      <div class="event-chip chip-delivery" data-target="card-bundle-label">🏷️ [꾸러미·파예] 명표 입고 마감</div>
+      <div class="event-chip chip-delivery" data-target="card-butter">🧈 [쫀득버터바이트] 확대매장 비주얼 입고 시작</div>
+      <div class="event-chip chip-return" data-target="card-spring1-disc">⛔ [냥이·꾹꾹이마들렌] 마지막 발주일</div>
+      <div class="event-chip chip-return" data-target="card-food-ops">🥚 [한개란] 소비기한 14일로 변경 적용</div>
+    </div>
+    <div class="day-cell has-event" id="apr-10"><div class="day-num">10</div>
+      <div class="event-chip chip-return" data-target="card-dresscode">⚾ [드레스코드] 착용 종료</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [스틱에그타르트] 마지막 발주일</div>
+      <div class="event-chip chip-sample" data-target="card-spring2-food">🧾 [Spring2] 포키·알린·슬링키·바질치킨 파트너샘플</div>
+      <div class="event-chip chip-food" data-target="card-butter">🧈 [쫀득버터바이트] 300개점 확대 판매</div>
+      <div class="event-chip chip-delivery" data-target="card-butter">🧈 [쫀득버터바이트] 확대매장 비주얼 입고 마감</div>
+    </div>
+    <div class="day-cell sat has-event" id="apr-11"><div class="day-num">11</div>
+      <div class="event-chip chip-delivery" data-target="card-sees">🍬 [씨즈캔디] 일괄입고 시작</div>
+      <div class="event-chip chip-return" data-target="card-spring1-disc">⛔ [딸기몽블랑·딸기생크림] 마지막 발주일</div>
+      <div class="event-chip chip-delivery" data-target="card-via-matcha">🍵 [비아말차] 신규 일괄입고 시작</div>
+    </div>
+
+    <!-- Week 3: 12~18 -->
+    <div class="day-cell sun has-event" id="apr-12"><div class="day-num">12</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [스틱에그타르트] 마지막 입고일</div>
+      <div class="event-chip chip-delivery" data-target="card-pkg-food">📦 [패키지푸드 3종] 일괄입고 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-ube">🟣 [우베바스크] 비주얼 입고 시작 · 자율발주 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-sees">🍬 [씨즈캔디] 일괄입고 마감</div>
+      <div class="event-chip chip-delivery" data-target="card-via-matcha">🍵 [비아말차] 신규 일괄입고 마감</div>
+      <div class="event-chip chip-delivery" data-target="card-sandwich-event">🥪 [이달의샌드위치] 비주얼 입고 시작</div>
+    </div>
+    <div class="day-cell has-event" id="apr-13"><div class="day-num">13</div>
+      <div class="event-chip chip-promo" data-target="card-tristar">⭐ [버디패스] 구독 유지 마감</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [스틱에그타르트] 마지막 판매일</div>
+      <div class="event-chip chip-delivery" data-target="card-pkg-food">📦 [패키지푸드 3종] 일괄입고 마감</div>
+      <div class="event-chip chip-delivery" data-target="card-spring2-bev">🌿 [Spring2] 신규 원부재료 자율발주 시작</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">📢 [Spring2] 이벤트 세부가이드 공지</div>
+      <div class="event-chip chip-delivery" data-target="card-sandwich-event">🥪 [이달의샌드위치] 비주얼 입고 마감</div>
+      <div class="event-chip chip-delivery" data-target="card-sandwich-event">🥪 [치킨머쉬룸] 발주 증량 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-ube">🟣 [우베바스크] 비주얼 입고 마감</div>
+      <div class="event-chip chip-return" data-target="card-cake-disc">⛔ [스틱에그타르트] 마지막 판매일</div>
+    </div>
+    <!-- 4/14 프로모션 종료 -->
+    <div class="day-cell has-event" id="apr-14"><div class="day-num">14</div>
+      <div class="event-chip chip-promo" data-target="card-kbo-promo">🏁 [KBO Spring1] 프로모션 종료</div>
+      <div class="event-chip chip-return" data-target="card-seoul">🖼️ [서울특화] 포스터 게시 종료</div>
+      <div class="event-chip chip-food" data-target="card-ube">🟣 [우베바스크] 출시</div>
+      <div class="event-chip chip-sample" data-target="card-spring2-food">🧾 [Spring2] 모르타델라샌드위치 파트너샘플</div>
+      <div class="event-chip chip-return" data-target="card-spring2-md">↩️ [Spring2 MD] 반품 접수 시작</div>
+      <div class="event-chip chip-return" data-target="card-cow">⚠️ [COW] 마감 시 코어 오늘의커피·아이스커피 차단 필수</div>
+      <div class="event-chip chip-return" data-target="card-spring1-disc">⛔ [냥이·꾹꾹이·딸기몽블랑·딸기생크림] 마지막 판매일</div>
+    </div>
+    <div class="day-cell has-event" id="apr-15"><div class="day-num">15</div>
+
+      <div class="event-chip chip-return" data-target="card-redplus">⛔ [RED+] 발주 중단 시작</div>
+      <div class="event-chip chip-food" data-target="card-via-matcha">🍵 [비아말차] 국산 신규 제품 판매 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-sees">🍬 [씨즈캔디] 명표 입고 시작</div>
+      <div class="event-chip chip-promo" data-target="card-spring1-disc">🍞 [Spring1 지속운영] 단종 안내 적용</div>
+      <div class="event-chip chip-delivery" data-target="card-bag-hook">👜 [베어리스타 가방걸이] 비주얼 입고 시작</div>
+      <div class="event-chip chip-return" data-target="card-chai">🍵 [차이티라떼] 키맵 반품 카테고리 이동</div>
+      <div class="event-chip chip-promo" data-target="card-cow">☕ [COW] 별빛블렌드 시작 · 코어차단 필수</div>
+      <div class="event-chip chip-food" data-target="card-pkg-food">🍫 [패키지푸드 3종] 출시 · 자율발주 시작</div>
+      <div class="event-chip chip-promo" data-target="card-sandwich-event">🥪 [이달의샌드위치] 2종으로 전환</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-promo">🎯 [Spring2] 프로모션 시작 · Play Your Day</div>
+      <div class="event-chip chip-md" data-target="card-spring2-md">🛒 [Spring2 MD] 이커머스 오픈 10시</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">⭐ [Spring2 Tri-Star] 이벤트 시작</div>
+      <div class="event-chip chip-food" data-target="card-spring2-food">🍰 [Spring2] 고객샘플 당일 소비기한 (버즈케이크·말차둥둥베어리)</div>
+    </div>
+    <div class="day-cell has-event" id="apr-16"><div class="day-num">16</div>
+      <div class="event-chip chip-promo" data-target="card-tristar">⭐ [버디패스] 추가 별 지급일</div>
+      <div class="event-chip chip-delivery" data-target="card-sees">🍬 [씨즈캔디] 명표 입고 마감</div>
+      <div class="event-chip chip-delivery" data-target="card-bag-hook">👜 [베어리스타 가방걸이] 비주얼 입고 마감</div>
+    </div>
+    <div class="day-cell has-event" id="apr-17"><div class="day-num">17</div>
+      <div class="event-chip chip-food" data-target="card-spring2-food">🥗 [Spring2] 바질치킨샌드위치 고객샘플</div>
+      <div class="event-chip chip-promo" data-target="card-bag-hook">👜 [베어리스타 가방걸이] 이벤트 시작</div>
+    </div>
+    <div class="day-cell sat has-event" id="apr-18"><div class="day-num">18</div>
+      <div class="event-chip chip-return" data-target="card-redplus">⛔ [RED+] 발주 중단 마감</div>
+    </div>
+
+    <!-- Week 4: 19~25 -->
+    <div class="day-cell sun has-event" id="apr-19"><div class="day-num">19</div>
+      <div class="event-chip chip-delivery" data-target="card-redplus">✅ [RED+] 발주 재개</div>
+    </div>
+    <div class="day-cell has-event" id="apr-20"><div class="day-num">20</div>
+      <div class="event-chip chip-return" data-target="card-spring2-md">↩️ [Spring2 MD] 반품 마감 17:50</div>
+      <div class="event-chip chip-promo" data-target="card-coupang">🛵 [쿠팡이츠] 슈퍼딜 시작 (3천원 할인)</div>
+    </div>
+    <div class="day-cell has-event" id="apr-21"><div class="day-num">21</div>
+      <div class="event-chip chip-return" data-target="card-spring2-events">⭐ [Spring2 Tri-Star] 종료</div>
+    </div>
+    <div class="day-cell has-event" id="apr-22"><div class="day-num">22</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">🌟 [야광스티커] 증정 이벤트 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-spring2-sleeve">🛍️ [Spring2 슬리브] 입고 시작</div>
+    </div>
+    <div class="day-cell has-event" id="apr-23"><div class="day-num">23</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">📅 [피스타치오] 음료 5/27까지 연장</div>
+      <div class="event-chip chip-delivery" data-target="card-spring2-sleeve">🛍️ [Spring2 슬리브] 입고 마감</div>
+      <div class="event-chip chip-return" data-target="card-bag-hook">👜 [베어리스타 가방걸이] 이벤트 종료</div>
+    </div>
+    <div class="day-cell has-event" id="apr-24"><div class="day-num">24</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">⭐ [케이크페어링] 별 증정 시작</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-sleeve">🛍️ [Spring2 슬리브] 사용 시작</div>
+      <div class="event-chip chip-promo" data-target="card-coupang">🛵 [쿠팡이츠] 슈퍼딜 6천원 할인 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-logistics">🍵 [제주녹차] 발주 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-pistachio">🥜 [피스타치오] 부재료 일괄발주 마감</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🖼️ [피스타치오] 포스터·페이보릿 입고</div>
+    </div>
+    <div class="day-cell sat" id="apr-25"><div class="day-num">25</div></div>
+
+    <!-- Week 5 -->
+    <div class="day-cell sun has-event" id="apr-26"><div class="day-num">26</div>
+      <div class="event-chip chip-return" data-target="card-coupang">🛵 [쿠팡이츠] 슈퍼딜 종료</div>
+    </div>
+    <div class="day-cell" id="apr-27"><div class="day-num">27</div></div>
+    <div class="day-cell" id="apr-28"><div class="day-num">28</div></div>
+    <div class="day-cell" id="apr-29"><div class="day-num">29</div></div>
+    <!-- 4/30 페리에 키맵·사이렌오더 종료 -->
+    <div class="day-cell has-event" id="apr-30"><div class="day-num">30</div>
+      <div class="event-chip chip-return" data-target="card-perrier">⛔ [페리에] 키맵 종료</div>
+      <div class="event-chip chip-return" data-target="card-perrier">⛔ [페리에] 사이렌오더 종료</div>
+      <div class="event-chip chip-return" data-target="card-foodbag">🛍️ [푸드백] 이벤트 종료</div>
+      <div class="event-chip chip-return" data-target="card-spring2-events">⭐ [케이크페어링] 별 증정 종료</div>
+    </div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+  </div>
+
+  <!-- ══════════ MAY ══════════ -->
+  <div class="month-label" style="animation-delay:0.2s">MAY</div>
+  <div class="month-sub" style="animation-delay:0.3s">2026년 5월</div>
+
+  <div class="calendar-grid">
+    <div class="day-header sun">일</div>
+    <div class="day-header">월</div>
+    <div class="day-header">화</div>
+    <div class="day-header">수</div>
+    <div class="day-header">목</div>
+    <div class="day-header">금</div>
+    <div class="day-header sat">토</div>
+
+    <!-- May 1 = 금요일 -->
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell has-event" id="may-1"><div class="day-num">1</div>
+      <div class="event-chip chip-return" data-target="card-perrier">↩️ [페리에] 반품 키맵 운영중</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">🍪 [쿠키스트로우] 증정 이벤트 시작</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">🐷 [피기뱅크 세트] 판매 이벤트 시작</div>
+      <div class="event-chip chip-delivery" data-target="card-reserve-summer">☕ [리저브 Summer] 비주얼 입고 시작</div>
+    </div>
+    <div class="day-cell sat has-event" id="may-2"><div class="day-num">2</div>
+      <div class="event-chip chip-delivery" data-target="card-reserve-summer">☕ [리저브 Summer] 비주얼 입고 마감</div>
+    </div>
+
+    <div class="day-cell sun" id="may-3"><div class="day-num">3</div></div>
+    <div class="day-cell has-event" id="may-4"><div class="day-num">4</div>
+      <div class="event-chip chip-return" data-target="card-humidifier">🔔 [가습기 리콜] 보상 변경 (음료쿠폰 5매)</div>
+    </div>
+    <div class="day-cell" id="may-5"><div class="day-num">5</div></div>
+    <div class="day-cell" id="may-6"><div class="day-num">6</div></div>
+    <div class="day-cell has-event" id="may-7"><div class="day-num">7</div>
+      <div class="event-chip chip-food" data-target="card-pistachio">🖼️ [피스타치오] CC 게시 종료</div>
+    </div>
+    <div class="day-cell has-event" id="may-8"><div class="day-num">8</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">☕ [아이스커피 사이즈업] 이벤트 시작</div>
+      <div class="event-chip chip-promo" data-target="card-reserve-summer">🌿 [리저브 Summer] 프로모션 시작</div>
+    </div>
+    <div class="day-cell sat" id="may-9"><div class="day-num">9</div></div>
+
+    <div class="day-cell sun has-event" id="may-10"><div class="day-num">10</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">⭐ [버디패스] 구독 유지 마감 23:59</div>
+    </div>
+    <div class="day-cell" id="may-11"><div class="day-num">11</div></div>
+    <div class="day-cell" id="may-12"><div class="day-num">12</div></div>
+    <div class="day-cell has-event" id="may-13"><div class="day-num">13</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-events">⭐ [버디패스] 추가 별 지급일</div>
+    </div>
+    <div class="day-cell" id="may-14"><div class="day-num">14</div></div>
+    <div class="day-cell" id="may-15"><div class="day-num">15</div></div>
+    <div class="day-cell sat" id="may-16"><div class="day-num">16</div></div>
+
+    <div class="day-cell sun has-event" id="may-17"><div class="day-num">17</div>
+      <div class="event-chip chip-return" data-target="card-spring2-events">☕ [아이스커피 사이즈업] 이벤트 종료</div>
+    </div>
+    <div class="day-cell" id="may-18"><div class="day-num">18</div></div>
+    <div class="day-cell" id="may-19"><div class="day-num">19</div></div>
+    <div class="day-cell" id="may-20"><div class="day-num">20</div></div>
+    <div class="day-cell" id="may-21"><div class="day-num">21</div></div>
+    <div class="day-cell" id="may-22"><div class="day-num">22</div></div>
+    <div class="day-cell sat" id="may-23"><div class="day-num">23</div></div>
+
+    <div class="day-cell sun" id="may-24"><div class="day-num">24</div></div>
+    <div class="day-cell has-event" id="may-25"><div class="day-num">25</div>
+      <div class="event-chip chip-promo" data-target="card-spring2-promo">🌸 [Spring2] 휴지기 시작</div>
+    </div>
+    <div class="day-cell" id="may-26"><div class="day-num">26</div></div>
+    <div class="day-cell has-event" id="may-27"><div class="day-num">27</div>
+      <div class="event-chip chip-return" data-target="card-pistachio">🏁 [피스타치오] 음료 2종 판매 종료</div>
+    </div>
+    <div class="day-cell" id="may-28"><div class="day-num">28</div></div>
+    <div class="day-cell has-event" id="may-29"><div class="day-num">29</div>
+      <div class="event-chip chip-return" data-target="card-sandwich-event">🥪 [샌드위치] 발주 증량 마감</div>
+    </div>
+    <!-- 5월 말 반품 키맵 종료 -->
+    <div class="day-cell sat has-event" id="may-30"><div class="day-num">30</div>
+      <div class="event-chip chip-return" data-target="card-perrier">⛔ [페리에] 반품 키맵 종료</div>
+    </div>
+
+    <div class="day-cell sun has-event" id="may-31"><div class="day-num">31</div>
+      <div class="event-chip chip-return" data-target="card-sandwich-event">🥪 [이달의샌드위치] 이벤트 종료</div>
+    </div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+    <div class="day-cell empty"></div>
+  </div>
+
+  <!-- ── DETAIL CARDS ── -->
+  <div class="detail-section">
+    <div class="detail-title">📋 일정 상세</div>
+    <div class="detail-cards">
+
+      <!-- ── 🎯 프로모션 ── -->
+      <div class="category-divider"><span>🎯 프로모션</span></div>
+
+      <!-- 프로모션 개요 -->
+      <div class="detail-card" id="card-kbo-promo">
+        <div class="card-label">프로모션</div>
+        <h3>2026 Spring1 KBO 서브 프로모션</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> <span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) ~ 4/14(화) 📅</span> · 19일간</li>
+          <li><span class="li-dot">🎯</span> 슬로건: Swing For Joy</li>
+          <li><span class="li-dot">🏟️</span> KBO 8개 구단 협업</li>
+        </ul>
+        <div class="tag-row">
+          <span class="tag">#KBO</span><span class="tag">#스프링1</span><span class="tag">#야구</span>
+        </div>
+      </div>
+
+      <!-- 음료 -->
+      <div class="detail-card food" id="card-beverage">
+        <div class="card-label">신규 음료 · 5종</div>
+        <h3>프로모션 음료 라인업</h3>
+        <ul>
+          <li><span class="li-dot">⚾</span> 베이스볼 매실 그린 티 (신규)</li>
+          <li><span class="li-dot">🥛</span> 슈크림폼 라떼 (컴백)</li>
+          <li><span class="li-dot">🍵</span> 슈크림폼 말차 라떼 (리터닝)</li>
+          <li><span class="li-dot">🍓</span> 슈크림폼 딸기 라떼 (신규)</li>
+          <li><span class="li-dot">🌸</span> 체리블라썸 백도 크림 프라푸치노 <b><span class="date-link" data-goto="mar-16" title="캘린더에서 보기">3/16 출시 📅</span></b></li>
+        </ul>
+      </div>
+
+      <!-- 푸드 -->
+      <div class="detail-card food" id="card-food">
+        <div class="card-label">신규 푸드 · 2종</div>
+        <h3>프로모션 푸드 라인업</h3>
+        <ul>
+          <li><span class="li-dot">🌭</span> 베이스볼 미트 칠리 핫도그<br>
+            <span style="font-size:0.72em;color:#666">샘플: 3/23(월) · NGO: HAM & MOZALLA QTY-1</span>
+          </li>
+          <li><span class="li-dot">🍿</span> 베이스볼 팝콘&프레첼<br>
+            <span style="font-size:0.72em;color:#666">KBO 베어리스타 랜덤 스티커 포함</span>
+          </li>
+          <li><span class="li-dot">📦</span> Spring ph1 기존 푸드 6종 지속 판매</li>
+        </ul>
+      </div>
+
+      <!-- 서울 특화 음료 -->
+      <div class="detail-card food" id="card-seoul">
+        <div class="card-label">특화 음료 · 서울</div>
+        <h3>🌆 서울 특화 음료 2종</h3>
+        <ul>
+          <li><span class="li-dot">🍹</span> 서울 석양 오미자 피지오 — Tall Only 7,800원</li>
+          <li><span class="li-dot">☕</span> 서울 막걸리향 콜드 브루 — Tall Only 7,500원</li>
+          <li><span class="li-dot">📅</span> 판매 기간: <b><span class="date-link" data-goto="mar-16" title="캘린더에서 보기">3/16(월) ~ 📅</span></b> 추후 안내 / 딜리버스 미판매</li>
+          <li><span class="li-dot">🏪</span> 판매 매장: 서울 내 100개 매장</li>
+          <li><span class="li-dot">📦</span> 원부재료: 3/14(토) 일괄 입고 · 자율 발주 3/14~</li>
+          <li><span class="li-dot">🖼️</span> CC (SKU 9800000013575): <b><span class="date-link" data-goto="mar-16" title="캘린더에서 보기">3/16 ~ 3/26 📅</span></b> 푸드쇼케이스 POS 앞<br>
+            출입문 포스터 (SKU 9800000013576): <b><span class="date-link" data-goto="mar-16" title="캘린더에서 보기">3/16 ~ 4/14 📅</span></b> 매장 외부 왼쪽</li>
+          <li><span class="li-dot">👤</span> 담당: 음료팀 헤이즐(홍정민) / 스토어마케팅 민디(오상민) 외</li>
+        </ul>
+      </div>
+
+      <!-- Spring2 프로모션 개요 -->
+      <div class="detail-card" id="card-spring2-promo">
+        <div class="card-label">프로모션 · Spring2</div>
+        <h3>🎯 2026 Spring2 프로모션 — Play Your Day</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) 📅</span> ~ <span class="date-link" data-goto="may-27" title="캘린더에서 보기">5/27(화) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">※ 휴지기: 5/25(일) ~ 5/27(화)</span></li>
+          <li><span class="li-dot">🧸</span> 토이스토리 콜라보레이션</li>
+          <li><span class="li-dot">👤</span> 음료: JB(신재빈) / 푸드: 그린(박종욱) / MD: 키드(김일두)<br>
+            <span style="font-size:0.72em;color:#666">프로모션 기획: 해나(김현경)·이브(김지원) / 카드: 아밀리(이서경)<br>SR: 베일리(심유민)·제시(김진실) / 물류: 에이미(이윤영)</span></li>
+        </ul>
+      </div>
+
+      <!-- Spring2 음료 -->
+      <div class="detail-card food" id="card-spring2-bev">
+        <div class="card-label">Spring2 · 신규 음료</div>
+        <h3>☕ Spring2 음료 라인업</h3>
+        <ul>
+          <li><span class="li-dot">🤠</span> 우디 카우보이 쿠키 콜드 브루 (신규) · 파트너음료 1회/일</li>
+          <li><span class="li-dot">🚀</span> 버즈 키위 팝 에너지 피지오 (신규) · 파트너음료 1회/일</li>
+          <li><span class="li-dot">🎀</span> 제시 슈트로베리 프라푸치노 (신규) · 파트너음료 1회/일</li>
+          <li><span class="li-dot">🥜</span> 바삭 피스타치오 바닐라 크림 콜드브루 / 초콜릿 프라푸치노 (~4/23) · 파트너음료 기본</li>
+          <li><span class="li-dot">🥛</span> 슈크림 라떼 / 슈폼 라떼 (지속) · 파트너음료 기본</li>
+          <li><span class="li-dot">🍵</span> 슈크림 말차 라떼 / 슈폼 말차 라떼 (지속) · 파트너음료 기본</li>
+          <li><span class="li-dot">📦</span> 신규 원부재료 자율발주: <b><span class="date-link" data-goto="apr-13" title="캘린더에서 보기">4/13(월)~ 📅</span></b></li>
+        </ul>
+      </div>
+
+      <!-- Spring2 푸드 -->
+      <div class="detail-card food" id="card-spring2-food">
+        <div class="card-label">Spring2 · 신규 푸드</div>
+        <h3>🍰 Spring2 푸드 라인업</h3>
+        <ul>
+          <li><span class="li-dot">🎂</span> 버즈 케이크 · 파트너샘플 <span class="date-link" data-goto="apr-8" title="캘린더에서 보기">4/8 📅</span> · 고객샘플 <span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15 📅</span></li>
+          <li><span class="li-dot">🍪</span> 포키 헤이즐넛 마카롱 · 파트너샘플 <span class="date-link" data-goto="apr-10" title="캘린더에서 보기">4/10 📅</span></li>
+          <li><span class="li-dot">🍪</span> 알린 피스타치오 마카롱 · 파트너샘플 <span class="date-link" data-goto="apr-10" title="캘린더에서 보기">4/10 📅</span></li>
+          <li><span class="li-dot">🌭</span> 슬링키 쫄깃 소시지 브레드 · 파트너샘플 <span class="date-link" data-goto="apr-10" title="캘린더에서 보기">4/10 📅</span><br>
+            <span style="font-size:0.72em;color:#666">워밍 필수 · NGO: BREAD>SAUSAGE ROLL · 메리쉐프: Promotion>Sausage Bread</span></li>
+          <li><span class="li-dot">🍵</span> 말차 둥둥베어리 · 파트너샘플 <span class="date-link" data-goto="apr-9" title="캘린더에서 보기">4/9 📅</span> · 고객샘플 <span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15 📅</span><br>
+            <span style="font-size:0.72em;color:#666">진열방법 바리스타 가이드 참고</span></li>
+          <li><span class="li-dot">🦆</span> 케이크 데코 초코(오리&양머리) · 10세트 단위 입고 · POS 키맵 포스팅</li>
+          <li><span class="li-dot">🍰</span> 말차 티라미수 · 파트너샘플 <span class="date-link" data-goto="apr-8" title="캘린더에서 보기">4/8 📅</span> · 고객샘플 <span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15 📅</span></li>
+          <li><span class="li-dot">⚠️</span> <b>버즈 케이크·말차 둥둥베어리 고객샘플 소비기한: 4/15 당일까지</b><br>
+            <span style="font-size:0.72em;color:#666">배송 용기 상단 [샘플] 스티커로 판매용과 구분 · 당일 사용 필수</span></li>
+          <li><span class="li-dot">🥪</span> 모르타델라 리코타 크림치즈 샌드위치 · 파트너샘플 <span class="date-link" data-goto="apr-14" title="캘린더에서 보기">4/14 📅</span><br>
+            <span style="font-size:0.72em;color:#666">워밍 · NGO: 5 Seconds QTY1 · 메리쉐프: Promotion>5 SECONDS</span></li>
+          <li><span class="li-dot">🥗</span> 바질 치킨 토마토 샌드위치 · 파트너샘플 <span class="date-link" data-goto="apr-10" title="캘린더에서 보기">4/10 📅</span> · 고객샘플 <span class="date-link" data-goto="apr-17" title="캘린더에서 보기">4/17 📅</span></li>
+        </ul>
+      </div>
+
+      <!-- Spring2 MD -->
+      <div class="detail-card md" id="card-spring2-md">
+        <div class="card-label">Spring2 · MD</div>
+        <h3>🛍️ Spring2 토이스토리 MD</h3>
+        <ul>
+          <li><span class="li-dot">🧸</span> MD 16종 + PWP 1종 + 증정 1종<br>
+            <span style="font-size:0.72em;color:#666">※ 토이스토리 알린 우산: 5/4 출시 예정</span></li>
+          <li><span class="li-dot">🛒</span> 이커머스 오픈: <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) 오전 10시 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">스타벅스 앱·카카오톡·네이버·무신사·29cm·더블유컨셉</span></li>
+          <li><span class="li-dot">⚠️</span> 구매제한: 품목별 최대 2개 (D+1일 후 해제)</li>
+          <li><span class="li-dot">↩️</span> 반품 접수: <b><span class="date-link" data-goto="apr-14" title="캘린더에서 보기">4/14(화) 08:00 📅</span> ~ <span class="date-link" data-goto="apr-20" title="캘린더에서 보기">4/20(월) 17:50 📅</span></b></li>
+          <li><span class="li-dot">👤</span> 담당: MD팀 키드(김일두)</li>
+        </ul>
+      </div>
+
+      <!-- Spring2 이벤트 -->
+      <div class="detail-card" id="card-spring2-events">
+        <div class="card-label">Spring2 · 이벤트</div>
+        <h3>⭐ Spring2 이벤트 일정</h3>
+        <ul>
+          <li><span class="li-dot">⭐</span> <b>Tri-Star</b>: <span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) ~ 4/21(화) 📅</span><br>
+            <span style="font-size:0.72em;color:#666">사오·딜리버스 별 3개 / POS 별 2개 · 우디·버즈·제시·버즈케이크 대상<br>· CC 게시: 4/15~4/21 (데일리 업데이트 참고) · 담당: SR팀 제시(김진실)</span></li>
+          <li><span class="li-dot">🪪</span> <b>버디패스 추가 별</b>: 4/15~4/21 참여 · 구독유지 <span class="date-link" data-goto="may-10" title="캘린더에서 보기">5/10(일) 23:59까지 📅</span> · 지급일 <span class="date-link" data-goto="may-13" title="캘린더에서 보기">5/13(수) 📅</span></li>
+          <li><span class="li-dot">🌟</span> <b>네온스티커 증정</b>: <span class="date-link" data-goto="apr-22" title="캘린더에서 보기">4/22(수)~ 📅</span> 소진 시까지<br>
+            <span style="font-size:0.72em;color:#666">· 대상음료 포함 2만원↑ 구매 시 · POS·사이렌오더 가능 (딜리버스 제외)<br>
+            · 증정품 SKU: 9400000002448 스타벅스 토이스토리 네온스티커 (2종 혼합, 20EA 단위 입고)<br>
+            · 비주얼: CC SKU 9800000013643 / 출입문포스터 SKU 9800000013658<br>
+            · 재고 충분 시 고객 종류 선택 가능 · 무료음료 쿠폰 사용 시 제외<br>
+            · 매장별 입고수량·판촉물 불량가이드: 4/13(월) 추가 공지 · 담당: 해나(김현경)·이브(김지원)</span></li>
+          <li><span class="li-dot">⭐</span> <b>케이크 페어링 별 증정</b>: <span class="date-link" data-goto="apr-24" title="캘린더에서 보기">4/24(금) ~ 4/30(목) 📅</span><br>
+            <span style="font-size:0.72em;color:#666">· Spring2 케이크+음료 별 3개 / 코어케이크+음료 별 2개<br>
+            · CC SKU 9800000013644 / 출입문포스터 SKU 9800000013659<br>
+            · 게시: 4/24~4/30 (데일리 업데이트 참고) · 담당: 해나(김현경)·이브(김지원)</span></li>
+          <li><span class="li-dot">🍪</span> <b>쿠키 스트로우 증정</b>: <span class="date-link" data-goto="may-1" title="캘린더에서 보기">5/1(금) ~ 5/7(목) 📅</span><br>
+            <span style="font-size:0.72em;color:#666">슈크림·슈폼 라떼 계열 2잔 구매 시 1EA 증정 · 세부가이드 4/13 공지</span></li>
+          <li><span class="li-dot">🐷</span> <b>피기뱅크 세트 판매</b>: <span class="date-link" data-goto="may-1" title="캘린더에서 보기">5/1(금)~ 📅</span> 소진 시 · 25,000원<br>
+            <span style="font-size:0.72em;color:#666">POS 전용 · DT존 불가 · 단품 판매 불가 · 세부가이드 4/13 공지</span></li>
+          <li><span class="li-dot">☕</span> <b>아이스커피 사이즈업</b>: <span class="date-link" data-goto="may-8" title="캘린더에서 보기">5/8(금) ~ 5/17(일) 📅</span><br>
+            <span style="font-size:0.72em;color:#666">오전 11시까지 에어로카노·스위트밀크·콜드브루 무료 사이즈업 · 세부가이드 4/13 공지</span></li>
+          <li><span class="li-dot">🎰</span> <b>랜덤 악세서리 참</b>: <span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) ~ 5/20(수) 📅</span> · 3,000원<br>
+            <span style="font-size:0.72em;color:#666">토이스토리 MD 구매 고객 한정 · POS 전용 · 세부가이드 4/13 공지</span></li>
+          <li><span class="li-dot">💳</span> <b>카드지갑 구매 이벤트</b>: <span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) ~ 5/20(수) 📅</span><br>
+            <span style="font-size:0.72em;color:#666">토이스토리 카드 2만원↑ 최초 충전 시 릴리패드 카드지갑 13,000원 구매 가능</span></li>
+        </ul>
+      </div>
+
+      <!-- Spring2 슬리브 -->
+      <div class="detail-card logistics" id="card-spring2-sleeve">
+        <div class="card-label">Spring2 · 소모품</div>
+        <h3>🛍️ Spring2 토이스토리 슬리브</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 사용 시작: <b><span class="date-link" data-goto="apr-24" title="캘린더에서 보기">4/24(금)~ 📅</span></b> 소진 시까지</li>
+          <li><span class="li-dot">🛍️</span> SKU 3종<br>
+            <span style="font-size:0.72em;color:#666">· 9400000002444 — 26 토이스토리 슬리브_우디<br>
+            · 9400000002445 — 26 토이스토리 슬리브_버즈<br>
+            · 9400000002446 — 26 토이스토리 슬리브_제시</span></li>
+          <li><span class="li-dot">📦</span> 입고: <b><span class="date-link" data-goto="apr-22" title="캘린더에서 보기">4/22(수) ~ 4/23(목) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">매장당 총 3박스 (각 SKU 1박스, 1BOX=1,000EA) · 일부 매장 2박스 랜덤 입고<br>매장별 입고 수량·SKU: 4/13(월) 공지 예정</span></li>
+          <li><span class="li-dot">⚠️</span> 겸용 슬리브만 토이스토리 디자인 운영 (숏 사이즈는 코어 지속)</li>
+        </ul>
+      </div>
+
+      <!-- 리저브 Summer -->
+      <div class="detail-card" id="card-reserve-summer">
+        <div class="card-label">프로모션 · 리저브 Summer</div>
+        <h3>🌿 26 Reserve Summer</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="may-8" title="캘린더에서 보기">5/8(금) ~ 9/2(수) 📅</span></b></li>
+          <li><span class="li-dot">☕</span> <b>콜롬비아 그로나스 데 에스페란자™</b><br>
+            <span style="font-size:0.72em;color:#666">빨간 사과 · 구운 아몬드 · 세이지 꽃의 풍미</span></li>
+          <li><span class="li-dot">☕</span> <b>선드라이드 브라질 파젠다 상주앙</b><br>
+            <span style="font-size:0.72em;color:#666">상큼한 살구 · 헤이즐넛 초콜릿의 풍미</span></li>
+          <li><span class="li-dot">📦</span> 비주얼 입고: <b><span class="date-link" data-goto="may-1" title="캘린더에서 보기">5/1(금) ~ 5/2(토) 📅</span></b></li>
+          <li><span class="li-dot">📝</span> 결품 확인 → 물류팀 빈 블라섬 접수</li>
+          <li><span class="li-dot">⏰</span> 미·과입고 → 당일 17시까지 배송특이사항 등록 필수</li>
+          <li><span class="li-dot">📮</span> 재배송 누락 → 물류팀 베일 연락</li>
+        </ul>
+      </div>
+
+      <!-- ── ☕ 음료 ── -->
+      <div class="category-divider"><span>☕ 음료</span></div>
+
+      <!-- 두바이 초콜릿 종료 -->
+      <div class="detail-card md" id="card-dubai">
+        <div class="card-label">글로벌 음료 · 단종</div>
+        <h3>⛔ 두바이 초콜릿 음료 2종 판매 종료</h3>
+        <ul>
+          <li><span class="li-dot">🍫</span> 아이스 두바이 초콜릿 말차</li>
+          <li><span class="li-dot">🍫</span> 아이스 두바이 초콜릿 모카</li>
+          <li><span class="li-dot">📅</span> 종료일: <b><span class="date-link" data-goto="mar-26" title="캘린더에서 보기">3/26(목) 📅</span></b> · 3/27부터 단종</li>
+          <li><span class="li-dot">🖼️</span> 비주얼 CC: 폐기 진행</li>
+          <li><span class="li-dot">📦</span> 사용 원부재료 처리 방안: 추후 안내 예정</li>
+          <li><span class="li-dot">👤</span> 담당: 음료팀 쏘피(하연정) / JB(신재빈)</li>
+        </ul>
+      </div>
+
+      <!-- 피스타치오 음료 -->
+      <div class="detail-card food" id="card-pistachio">
+        <div class="card-label">신규 음료 · 피스타치오</div>
+        <h3>🥜 바삭 피스타치오 음료 2종</h3>
+        <ul>
+          <li><span class="li-dot">🧋</span> 바삭 피스타치오 바닐라 크림 콜드 브루 — Tall Only 7,500원</li>
+          <li><span class="li-dot">🧋</span> 바삭 피스타치오 초콜릿 프라푸치노 — Tall Only 7,700원</li>
+          <li><span class="li-dot">📅</span> 판매 기간: <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) 📅</span> ~ <span class="date-link" data-goto="may-27" title="캘린더에서 보기">5/27(화) 📅</span></b> (4/23 → 5/27 연장)</li>
+          <li><span class="li-dot">🏪</span> 전 매장 (미군부대·프로모션 미판매 매장 제외) / 딜리버스 판매</li>
+          <li><span class="li-dot">📦</span> 신규 부재료 3종 (일괄 3/23~3/24 · 자율 3/25~)<br>
+            <span style="font-size:0.72em;color:#666">그린 피스타치오 소소 / 카다이프 토핑 / 코코넛 베이스</span></li>
+          <li><span class="li-dot">📦</span> Core 원부재료 5종 — <b><span class="date-link" data-goto="mar-25" title="캘린더에서 보기">3/25 발주 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">바닐라 크림 베이스 / 헤이즐넛 시럽 / 콜드 브루 / 바모카 / 프릿츠 골드</span></li>
+          <li><span class="li-dot">🖼️</span> <b>CC</b> (SKU 9800000013462)<br>
+            <span style="font-size:0.72em;color:#666">입고: 3/22(일)~3/23(월) · 게시: 3/24(화)~4/7(화) · 게시 후 보관<br>게시 위치: POS 앞 게시대</span></li>
+          <li><span class="li-dot">🖼️</span> <b>출입문 포스터</b> (SKU 9800000013416)<br>
+            <span style="font-size:0.72em;color:#666">입고: 3/24(화) · 게시: 3/27(금)~3/31(화)<br>게시 위치: 출입문 좌측 상단 (이달의 샌드위치 포스터 제거 후 보관)</span></li>
+          <li><span class="li-dot">🖼️</span> <b>바리스타 페이보릿</b><br>
+            <span style="font-size:0.72em;color:#666">입고: 3/24(화)</span></li>
+          <li><span class="li-dot">👤</span> 담당: 음료팀 JB(신재빈) / 브랜드마케팅팀 애니(장희수) 외</li>
+        </ul>
+      </div>
+
+      <!-- RTD 단종 -->
+      <div class="detail-card md" id="card-perrier">
+        <div class="card-label">RTD · 단종 안내</div>
+        <h3>페리에 플레인 330ML 단종</h3>
+        <ul>
+          <li><span class="li-dot">🆔</span> SKU: 9300000005766 페리에 플레인 330ML</li>
+          <li><span class="li-dot">🔄</span> 대체 상품: 에비앙 스파클링 330ML<br><span style="font-size:0.72em;color:#666">SKU 9300000006137 · 매장 재고 소진 후 전환</span></li>
+          <li><span class="li-dot">🗝️</span> 키맵 운영: <b><span class="date-link" data-goto="apr-30" title="캘린더에서 보기">~4월 말 📅</span></b></li>
+          <li><span class="li-dot">↩️</span> 반품 키맵 운영: <b><span class="date-link" data-goto="may-30" title="캘린더에서 보기">~5월 말 📅</span></b></li>
+          <li><span class="li-dot">📱</span> 사이렌 오더 노출: <b><span class="date-link" data-goto="apr-30" title="캘린더에서 보기">~4월 말 📅</span></b></li>
+          <li><span class="li-dot">📌</span> 5월 이후 재고 보유 매장: QR코드 스캔하여 판매</li>
+        </ul>
+      </div>
+
+      <!-- ── 🍽️ 푸드 ── -->
+      <div class="category-divider"><span>🍽️ 푸드</span></div>
+
+      <!-- 저녁 푸드 할인 -->
+      <div class="detail-card food" id="card-evening">
+        <div class="card-label">이벤트 · 푸드 할인</div>
+        <h3>🌙 저녁시간 푸드 20% 할인</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="mar-23" title="캘린더에서 보기">3/23(월) ~ 3/31(화) 📅</span></b> · 9일간</li>
+          <li><span class="li-dot">⏰</span> 시간: 오후 8시 ~ 영업 종료</li>
+          <li><span class="li-dot">🥪</span> 대상: 샌드위치 / 케이크·미니디저트 / 브레드 전 품목<br><span style="font-size:0.72em;color:#666">※ 패키지 푸드·RTE 제외 / 리저브·특화 포함</span></li>
+          <li><span class="li-dot">⛔</span> <b>3/26부터 제외 품목 추가: 햄 &amp; 루꼴라 페스토 샌드위치</b><br><span style="font-size:0.72em;color:#666">※ 이달의 샌드위치 프로모션 중복 할인 방지<br>※ POS: 중복 할인 불가 / 사이렌오더: 중복 할인 가능 (시스템 반영 3/26~)</span></li>
+          <li><span class="li-dot">🏪</span> 대상 매장: 전 매장<br><span style="font-size:0.72em;color:#666">※ 인천공항·미군부대 입점 매장 제외</span></li>
+          <li><span class="li-dot">💳</span> 적용: POS·사이렌오더·딜리버스<br><span style="font-size:0.72em;color:#666">※ 외부 채널 불가 / 쿠폰·임직원 할인 중복 불가</span></li>
+          <li><span class="li-dot">📱</span> 앱 확인: 사이렌오더 > "Evening Event" 태그</li>
+          <li><span class="li-dot">🖨️</span> 비주얼: 매장 컬러 출력 후 푸드 쇼케이스 위 게시</li>
+          <li><span class="li-dot">👤</span> 담당: 브랜드마케팅팀 정주연(라온) / 오상민(민디)</li>
+        </ul>
+      </div>
+
+      <!-- 냉동 브레드 2종 -->
+      <div class="detail-card food" id="card-frozen-bread">
+        <div class="card-label">신규 푸드 · 냉동 브레드</div>
+        <h3>❄️ 냉동 브레드 2종 출시</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 출시일: <b><span class="date-link" data-goto="mar-31" title="캘린더에서 보기">3/31(화) 📅</span></b></li>
+          <li><span class="li-dot">🍞</span> <b>번트 크림치즈 브레드</b> — 4,500원 · SKU: 9300000006480<br>
+            <span style="font-size:0.72em;color:#666">부드럽고 폭신한 빵 속에 크림치즈를 채워 진하게 구워 낸 크림치즈 브레드</span></li>
+          <li><span class="li-dot">🔄</span> 운영 프로세스: 냉동 입고 → 냉장 해동(최소 6시간) → 실온 진열 → 워밍 후 제공<br>
+            <span style="font-size:0.72em;color:#666">판매기한 48시간 = 해동 6시간 + 보관·판매 42시간</span></li>
+          <li><span class="li-dot">⚠️</span> 워밍 필수 (법적 필수 사항) / 1박스 = 16개 / 1개입 별도 포장<br>
+            <span style="font-size:0.72em;color:#666">낱개 보관 시 보관함에 대표 라벨링 부착 · 한글표시사항 별도 보관 필수</span></li>
+          <li><span class="li-dot">🏪</span> 진열 위치: 브레드 진열 존</li>
+          <li><span class="li-dot">🍽️</span> For Here: 접시·포크 제공 / To Go·딜리버스: 패스츄리 봉투 제공</li>
+          <li><span class="li-dot">📊</span> 재고 실사<br>
+            <span style="font-size:0.72em;color:#666">일일: 해동 수량 기준 / 다음날 판매 가능 수량은 냉동 잔여 재고 수기 입력<br>주간·월간: 냉동 보관 잔여 수량 파악 · ※ 할라피뇨 햄 치즈 데니쉬와 운영 기준 동일</span></li>
+          <li><span class="li-dot">🥚</span> K-에그 바이트 — 3,000원<br>
+            <span style="font-size:0.72em;color:#666">판매기한: 해동 후 2일 (냉장)</span></li>
+          <li><span class="li-dot">⚠️</span> 냉장 해동 최소 6시간 후 진열 · 워밍 필수 후 제공</li>
+          <li><span class="li-dot">🔧</span> 매장별 메리쉐프 버전에 맞는 워밍 코드 설치 필요<br>
+            <span style="font-size:0.72em;color:#666">신형 / 구형 / Bake-In 구분 · USB 업데이트 시 신규 파일만 다운로드</span></li>
+          <li><span class="li-dot">🚚</span> 일괄 입고: <b><span class="date-link" data-goto="mar-23" title="캘린더에서 보기">3/23(월) ~ 3/29(일) 📅</span></b> (매장별 2Box, 32EA)</li>
+          <li><span class="li-dot">🌡️</span> <b><span class="date-link" data-goto="mar-30" title="캘린더에서 보기">3/30(월) 해동 시작 필수 📅</span></b> — 3/31 출시 전일 냉장 해동 진행<br>
+            <span style="font-size:0.72em;color:#666">번트 크림치즈 브레드: 최소 6시간 / K-에그 바이트: 최소 6시간</span></li>
+          <li><span class="li-dot">📦</span> 자율 발주: <b><span class="date-link" data-goto="mar-31" title="캘린더에서 보기">3/31(화)~ 📅</span></b></li>
+          <li><span class="li-dot">🏷️</span> 명표 입고: <b><span class="date-link" data-goto="mar-26" title="캘린더에서 보기">3/26(목) ~ 3/27(금) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">미입고 시 첨부 명표 파일 출력 후 자율 발주</span></li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 에드릭(신길도) / 구매팀 헤이븐(유혜경) / 물류팀 베일(윤규호)</li>
+        </ul>
+      </div>
+
+      <!-- 냉동 초콜릿 크런치 케이크 -->
+      <div class="detail-card food" id="card-frozen-cake">
+        <div class="card-label">신규 푸드 · 냉동 케이크</div>
+        <h3>❄️ 초콜릿 크런치 케이크 출시</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 출시일: <b><span class="date-link" data-goto="mar-31" title="캘린더에서 보기">3/31(화) 📅</span></b></li>
+          <li><span class="li-dot">💰</span> 판매가: 7,300원</li>
+          <li><span class="li-dot">🏪</span> 전 매장 (냉동 케이크 취급 매장) / 딜리버스 판매</li>
+          <li><span class="li-dot">❄️</span> 보관: 냉장 (케이크 쇼케이스) / 판매기한: 해동 시간 포함 2일(48시간)</li>
+          <li><span class="li-dot">🆔</span> SKU: 9300000006565</li>
+          <li><span class="li-dot">💬</span> 진한 초콜릿 풍미의 가나슈 크림을 케이크 시트 사이에 샌드하고 초콜릿 크런치 볼로 바삭한 식감을 살린 케이크<br>
+            <span style="font-size:0.72em;color:#666">1박스 = 조각케이크 16개 / 4개입 별도 박스 포장 (한글 표시사항 박스별 부착)</span></li>
+          <li><span class="li-dot">🔄</span> 운영 프로세스: 냉동 입고 → 해동·2차 가공(슈가파우더) → 진열 판매</li>
+          <li><span class="li-dot">⏱️</span> 최소 해동 시간: <b>10시간</b> (전일 또는 당일)<br>
+            <span style="font-size:0.72em;color:#666">판매기한 48시간 = 해동 10시간 + 보관·판매 38시간</span></li>
+          <li><span class="li-dot">🍫</span> 2차 가공: 슈가파우더 도포 (최초 진열 시 1회 · 법적 필수 · 이후 추가 불필요)</li>
+          <li><span class="li-dot">⚠️</span> <b>슈가파우더 입고 지연 — 대체품 운영 안내</b><br>
+            <span style="font-size:0.72em;color:#666">· 대체품: 모카 파우더 885g (SKU 11130445 / BAR MOCHA POWDER)<br>
+            · 적용 기간: 슈가파우더 입고 시까지<br>
+            · 적용 방법: 파우더 쉐이커로 케이크 가장자리 도포 (슈가파우더와 동일)<br>
+            · 슈가파우더 입고 예정: 4월 중순 (발주 가능 시점 추후 안내)</span></li>
+          <li><span class="li-dot">🏪</span> 진열 위치: 케이크 진열 존 (케이크 쇼케이스)</li>
+          <li><span class="li-dot">🍽️</span> For Here: 접시·포크·물티슈 제공 / To Go: 포크·물티슈 제공</li>
+          <li><span class="li-dot">📊</span> 재고 실사<br>
+            <span style="font-size:0.72em;color:#666">일일: 해동한 수량 기준 / 주간·월간: 냉동 보관 잔여 수량 파악<br>※ 고구마 카스텔라 생크림 케이크와 운영 기준 동일</span></li>
+          <li><span class="li-dot">🚚</span> 일괄 입고: <b><span class="date-link" data-goto="mar-22" title="캘린더에서 보기">3/22(일) ~ 3/29(일) 📅</span></b> (매장별 케이크 2Box 32EA + 명표 1EA)<br>
+            <span style="font-size:0.72em;color:#666">첨부파일에서 매장별 입고 일자 확인</span></li>
+          <li><span class="li-dot">📦</span> 자율 발주: <b><span class="date-link" data-goto="mar-24" title="캘린더에서 보기">3/24(화)~ 📅</span></b> (냉동 발주일에 맞춰 진행)</li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 그린(박종욱) / 구매팀 베리(임경화) / 물류팀 션(박해성)</li>
+        </ul>
+      </div>
+
+      <!-- 쫀득 버터 바이트 -->
+      <div class="detail-card food" id="card-butter">
+        <div class="card-label">신규 푸드 · 출시 확정</div>
+        <h3>🧈 쫀득 버터 바이트 출시 확정</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 출시일: <b><span class="date-link" data-goto="apr-4" title="캘린더에서 보기">4/4(토) 📅</span></b> (3/31 연기 → 4/4 확정)</li>
+          <li><span class="li-dot">📦</span> 4/4 매장 입고분: 일괄발주 진행 (매장 발주 미진행 · 첨부 리스트 확인)</li>
+          <li><span class="li-dot">📦</span> 자율발주: <b><span class="date-link" data-goto="apr-3" title="캘린더에서 보기">4/3(금)~ 📅</span></b> 매장 상황에 맞게 진행</li>
+          <li><span class="li-dot">📋</span> 입고 단위: 2세트 구성 · 판매 시까지 입고 패키지 보유 필수 (케이크와 동일)</li>
+          <li><span class="li-dot">🖼️</span> 기 입고 비주얼·명표: <b>4/4부터 위치에 맞춰 게시</b></li>
+          <li><span class="li-dot">👤</span> 담당: 이노베이션팀 애런(박한빛)</li>
+          <li><span class="li-dot">🆔</span> SKU: 9300000006602</li>
+          <li><span class="li-dot">💰</span> 판매가: 7,900원 (4개입)</li>
+          <li><span class="li-dot">🏪</span> 판매 매장: <b>300개 매장</b> (기존 100개 + 신규 200개 · <span class="date-link" data-goto="apr-10" title="캘린더에서 보기">4/10(금) 확대 📅</span>)</li>
+          <li><span class="li-dot">📦</span> 입고 형태: 2입 비닐 포장 (4개입) · 4개입 단위 판매 / 상온 보관</li>
+          <li><span class="li-dot">⏰</span> 판매기한: 입고 후 2일 / 워밍 불가 / 낱개 판매 불가</li>
+          <li><span class="li-dot">🚚</span> 자율발주 (일괄발주 없음) · 매장별 최대 <b>46EA</b></li>
+          <li><span class="li-dot">📱</span> 사이렌오더 · 딜리버스 운영 / 구매제한 없음</li>
+          <li><span class="li-dot">🏪</span> 진열 위치: 브레드 상온 쇼케이스 · 명표 + A5 CC(앞면) 함께 진열<br>
+            <span style="font-size:0.72em;color:#666">For Here → Front 진열 / To Go → 쇼케이스</span></li>
+          <li><span class="li-dot">⚠️</span> SOLD OUT 시: A5 CC 뒷면(Sold Out 안내)으로 교체 후 지속 고지</li>
+          <li><span class="li-dot">🖼️</span> 비주얼 입고: <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) ~ 3/28(토) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">출입문 포스터 / A5 CC / 명표</span></li>
+          <li><span class="li-dot">💬</span> 푸드 설명: 진한 버터의 풍미와 연유의 달콤함이 쫀득한 식감으로 어우러지는 고소한 미니 디저트 (4개입)</li>
+        </ul>
+      </div>
+
+      <!-- 3/30 해동 준비 -->
+      <div class="detail-card" id="card-thaw-prep" style="border-left-color:#e87020">
+        <div class="card-label">3/30 · 해동 준비 필수</div>
+        <h3>🌡️ 3/31 출시 냉동 푸드 3종 — 3/30(월) 해동 시작</h3>
+        <ul>
+          <li><span class="li-dot">🍞</span> <b>번트 크림치즈 브레드</b> — 최소 <b>6시간</b> 냉장 해동<br>
+            <span style="font-size:0.72em;color:#666">판매기한 48시간 = 해동 6시간 + 보관·판매 42시간</span></li>
+          <li><span class="li-dot">🥚</span> <b>K-에그 바이트</b> — 최소 <b>6시간</b> 냉장 해동<br>
+            <span style="font-size:0.72em;color:#666">판매기한: 해동 후 2일 (냉장 보관)</span></li>
+          <li><span class="li-dot">🍫</span> <b>초콜릿 크런치 케이크</b> — 최소 <b>10시간</b> 냉장 해동 후 슈가파우더 2차 가공<br>
+            <span style="font-size:0.72em;color:#666">판매기한 48시간 = 해동 10시간 + 보관·판매 38시간</span></li>
+          <li><span class="li-dot">⚠️</span> 3/31 오픈 전 진열 완료를 위해 <b><span class="date-link" data-goto="mar-30" title="캘린더에서 보기">3/30 전일 해동 시작 권장 📅</span></b></li>
+        </ul>
+      </div>
+
+      <!-- 레브두 피스타치오 크루아상 -->
+      <div class="detail-card food" id="card-levdeux">
+        <div class="card-label">Tasty Journey · 신규 푸드</div>
+        <h3>🥐 레브두 피스타치오 크루아상 출시</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 판매 기간: <b><span class="date-link" data-goto="mar-26" title="캘린더에서 보기">3/26(목) ~ 📅</span></b> 별도 종료 안내 시까지</li>
+          <li><span class="li-dot">🏪</span> 대상 매장 6개<br>
+            <span style="font-size:0.72em;color:#666">
+            · 4152 센터필드R<br>
+            · 3467 스타필드코엑스몰R<br>
+            · 3550 용산역써밋R<br>
+            · 3460 성수역<br>
+            · 4431 홍대동교<br>
+            · 4174 망원한강공원</span></li>
+          <li><span class="li-dot">⏰</span> 매장별 판매 시작 시간<br>
+            <span style="font-size:0.72em;color:#666">· <b>10:00</b> — 센터필드R · 스타필드코엑스몰R · 용산역써밋R<br>
+            · <b>11:00</b> — 망원한강공원 · 성수역 · 홍대동교</span></li>
+          <li><span class="li-dot">📦</span> 자율 발주: <b><span class="date-link" data-goto="mar-24" title="캘린더에서 보기">3/24(화)부터 📅</span></b></li>
+          <li><span class="li-dot">🖼️</span> 비주얼 4종 입고<br>
+            <span style="font-size:0.72em;color:#666">· 리플렛·출입문 포스터·푸드소개 A5 CC: <span class="date-link" data-goto="mar-24" title="캘린더에서 보기">3/24(화)까지 📅</span> 택배 입고<br>
+            · 푸드 명표: 3/20(금)~3/23(월) 택배 입고<br>
+            · 게시: 3/26(목)~ (첨부 가이드 확인)</span></li>
+          <li><span class="li-dot">🆔</span> 세트 SKU: HOT/ICE 아메리카노 각각 세트 SKU 이원화 운영</li>
+          <li><span class="li-dot">⚠️</span> 세트 아메리카노 다른 음료로 변경 불가</li>
+          <li><span class="li-dot">⚠️</span> 세트 아메리카노 커스텀 불가 (디카페인·샷추가·시럽추가 등)</li>
+          <li><span class="li-dot">📋</span> 매장별 판매 시작 시간·A5 CC 앞/뒷면 운영 확인 필수</li>
+          <li><span class="li-dot">👤</span> 담당: 이노베이션팀 애런(박한빛) / 브랜드마케팅팀 잭(홍승의)</li>
+        </ul>
+      </div>
+
+      <!-- 샌드위치 소비기한 연장 -->
+      <div class="detail-card food" id="card-sandwich-ext">
+        <div class="card-label">푸드 · 운영 변경</div>
+        <h3>🥪 샌드위치 2종 소비기한 연장</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 적용일: <b><span class="date-link" data-goto="mar-31" title="캘린더에서 보기">3/31(화) 입고분부터 📅</span></b></li>
+          <li><span class="li-dot">🥪</span> 대상: 베이컨 시저 치킨 샌드위치 / 치킨 베이컨 랩</li>
+          <li><span class="li-dot">🔄</span> 소비기한 변경: (기존) 1일 → (변경) <b>2일</b></li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 차라(장우연)</li>
+        </ul>
+      </div>
+
+      <!-- 패키지푸드 3종 -->
+      <div class="detail-card food" id="card-pkg-food">
+        <div class="card-label">신규 푸드 · 패키지</div>
+        <h3>🍫 패키지푸드 3종 출시 (4/15)</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 출시일: <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) 📅</span></b></li>
+          <li><span class="li-dot">🥮</span> <b>카다이프 찰떡파이</b> — 14,900원 · LTO 한정수량<br>
+            <span style="font-size:0.72em;color:#666">쫀득 찰떡+바삭 카다이프+피스타치오 크림 · 6개입 · 진열: 푸드쇼케이스 위 · 점당 9EA 일괄입고</span></li>
+          <li><span class="li-dot">🍫</span> <b>크런치 핑거 초콜릿</b> — 2,500원 · 상시운영<br>
+            <span style="font-size:0.72em;color:#666">솔티드 카라멜+아몬드 스틱 · 진열: 캔디바 · 점당 15EA(1 RRP)</span></li>
+          <li><span class="li-dot">🍵</span> <b>제주 말차 러스크</b> — 1,800원 · LTO 한정수량<br>
+            <span style="font-size:0.72em;color:#666">말차 초콜릿+바게트 러스크 · 진열: 캔디바 · 점당 32EA(4 RRP) · 8개 RRP 세트 키맵 포스팅 가능</span></li>
+          <li><span class="li-dot">📦</span> 일괄 입고: <b><span class="date-link" data-goto="apr-12" title="캘린더에서 보기">4/12(일) ~ 4/13(월) 📅</span></b> · 자율발주: 4/15~</li>
+          <li><span class="li-dot">⚠️</span> 판매기한: D-7일 / 보관: 실온 / 별도 명표 미운영 (패키지에 가격 기입)</li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 소피아(나윤선) / 소피(김소연)</li>
+        </ul>
+      </div>
+
+      <!-- 우베 바스크 치즈 케이크 -->
+      <div class="detail-card food" id="card-ube">
+        <div class="card-label">신규 푸드 · 케이크</div>
+        <h3>🟣 우베 바스크 치즈 케이크</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 출시일: <b><span class="date-link" data-goto="apr-14" title="캘린더에서 보기">4/14(화) 📅</span></b></li>
+          <li><span class="li-dot">🆔</span> SKU: 9300000006633</li>
+          <li><span class="li-dot">💰</span> 판매가: 7,500원</li>
+          <li><span class="li-dot">🏪</span> 판매 매장: 100개 매장 (첨부파일 확인) / 딜리버스 판매</li>
+          <li><span class="li-dot">❄️</span> 보관: 냉장 / 판매기한: 입고 후 2일 / 워밍 불가</li>
+          <li><span class="li-dot">🍽️</span> For Here: 케이크 닦아 제공 / To Go: 케이크 박스 제공 / 딜리버스 운영</li>
+          <li><span class="li-dot">💬</span> 우베 특유의 달콤하고 고급스러운 풍미와 보랏빛 색감을 더해 진하게 구운 치즈 케이크</li>
+          <li><span class="li-dot">🏪</span> 진열: 케이크 냉장 쇼케이스 · 명표 + A5 CC(앞면) 함께 진열<br>
+            <span style="font-size:0.72em;color:#666">※ 진열운케이크와 동일하게 냉장 진열</span></li>
+          <li><span class="li-dot">⛔</span> SOLD OUT 시: 냉장 쇼케이스 A5 CC 뒷면(판매 완료 안내)으로 지속 고지 변경</li>
+          <li><span class="li-dot">🖼️</span> 비주얼 게시 위치<br>
+            <span style="font-size:0.72em;color:#666">· 출입문 포스터: 출입문 좌측 (슈크림 라떼 포스터 → 우베바스크 교체)<br>
+            · 푸드 소개 A5 CC: 푸드 쇼케이스 안<br>
+            · 푸드 그림명표: 상품 전면 고지<br>
+            · 게시 기간: 대상 푸드 판매 기간 동안</span></li>
+          <li><span class="li-dot">📦</span> 자율발주: <b><span class="date-link" data-goto="apr-12" title="캘린더에서 보기">4/12(일)~ 📅</span></b></li>
+          <li><span class="li-dot">🖼️</span> 비주얼 입고: <b><span class="date-link" data-goto="apr-12" title="캘린더에서 보기">4/12(일) ~ 4/13(월) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">출입문 포스터 / A5 CC / 명표</span></li>
+          <li><span class="li-dot">👤</span> 담당: 이노베이션팀 킴(김충회)</li>
+        </ul>
+      </div>
+
+      <!-- 씨즈캔디 -->
+      <div class="detail-card food" id="card-sees">
+        <div class="card-label">신규 푸드 · 패키지</div>
+        <h3>🍬 씨즈캔디 어쏘티드 리틀팝 재운영</h3>
+        <ul>
+          <li><span class="li-dot">🆔</span> SKU: 9300000006139 · 판매가: 28,000원</li>
+          <li><span class="li-dot">🏪</span> 500개 매장 / 딜리버스 판매 / 보관: 실온 / 판매기한: D-7일</li>
+          <li><span class="li-dot">🏷️</span> 진열: 캔디바 또는 쇼케이스 상단 (명표 필수)</li>
+          <li><span class="li-dot">📦</span> 상품 일괄입고: <b><span class="date-link" data-goto="apr-11" title="캘린더에서 보기">4/11(토) ~ 4/12(일) 📅</span></b> · 매장당 12EA</li>
+          <li><span class="li-dot">🏷️</span> 명표 입고: <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) ~ 4/16(목) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">명표 입고 전 판매 시 첨부 명표 출력하여 진열</span></li>
+          <li><span class="li-dot">⚠️</span> 자율발주 불가 · 한글표시사항/소비기한 누락 상품 격리 후 담당자 문의</li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 소피(김소연)</li>
+        </ul>
+      </div>
+
+      <!-- 운영 변경 / 소비기한 -->
+      <div class="detail-card" id="card-food-ops">
+        <div class="card-label">운영 변경 · 소비기한</div>
+        <h3>📋 푸드 운영 변경 안내</h3>
+        <ul>
+          <li><span class="li-dot">🥚</span> <b>한개란 소비기한 단축</b> (하절기 4~9월 적용)<br>
+            <span style="font-size:0.72em;color:#666">기존 17일 → 변경 14일 (D-1까지 판매) · <span class="date-link" data-goto="apr-9" title="캘린더에서 보기">4/9 입고분부터 📅</span><br>동절기(10~3월)는 기존 소비기한 적용 · 담당: 푸드팀 하이디(김세현)</span></li>
+          <li><span class="li-dot">🥪</span> <b>카스텔라 크림 에그 샌드위치 소비기한 단축</b><br>
+            <span style="font-size:0.72em;color:#666">기존 2일 → 변경 1일 · <span class="date-link" data-goto="apr-7" title="캘린더에서 보기">4/7(화) 입고분부터 📅</span> · 담당: 푸드팀 차라(장우연)</span></li>
+          <li><span class="li-dot">📖</span> <b>냉동 푸드 운영 매뉴얼 '별별백서' 통합 업데이트</b><br>
+            <span style="font-size:0.72em;color:#666">별별백서 > [통합리스트] 게시 예정 · 담당: 푸드팀 제레미(황정민)</span></li>
+        </ul>
+      </div>
+
+      <!-- Spring1 지속운영 / 단종 -->
+      <div class="detail-card md" id="card-spring1-disc">
+        <div class="card-label">Spring1 · 지속운영 & 단종</div>
+        <h3>🌸 Spring1 프로모션 종료 후 운영 안내</h3>
+        <ul>
+          <li><span class="li-dot">✅</span> <b>지속 운영 상품</b> (단종일 추후 안내)<br>
+            <span style="font-size:0.72em;color:#666">· 카스텔라 크림 에그 샌드위치 (SKU 9300000006432)<br>
+            · 베이컨 시저 치킨 샌드위치 (SKU 9300000006416)<br>
+            · 베이스볼 미트 칠리 핫도그 (SKU 9300000006431)<br>
+            · 부드러운 딸기 말차 케이크 (SKU 9300000006465) — 코어 명표 입고 추후 안내</span></li>
+          <li><span class="li-dot">⛔</span> <b>냥이 마들렌</b> (SKU 9300000006430)<br>
+            <span style="font-size:0.72em;color:#666">마지막 발주일: <span class="date-link" data-goto="apr-9" title="캘린더에서 보기">4/9(목) 📅</span> · 마지막 판매일: <span class="date-link" data-goto="apr-14" title="캘린더에서 보기">4/14(화) 📅</span></span></li>
+          <li><span class="li-dot">⛔</span> <b>꾹꾹이 마들렌</b> (SKU 9300000006429)<br>
+            <span style="font-size:0.72em;color:#666">마지막 발주일: <span class="date-link" data-goto="apr-9" title="캘린더에서 보기">4/9(목) 📅</span> · 마지막 판매일: <span class="date-link" data-goto="apr-14" title="캘린더에서 보기">4/14(화) 📅</span></span></li>
+          <li><span class="li-dot">⛔</span> <b>딸기 쏙 몽블랑 케이크</b> (SKU 9300000006467)<br>
+            <span style="font-size:0.72em;color:#666">마지막 발주일: <span class="date-link" data-goto="apr-11" title="캘린더에서 보기">4/11(토) 📅</span> · 마지막 판매일: <span class="date-link" data-goto="apr-14" title="캘린더에서 보기">4/14(화) 📅</span></span></li>
+          <li><span class="li-dot">⛔</span> <b>딸기 생크림 레이어 케이크</b> (SKU 9300000006406)<br>
+            <span style="font-size:0.72em;color:#666">마지막 발주일: <span class="date-link" data-goto="apr-11" title="캘린더에서 보기">4/11(토) 📅</span> · 마지막 판매일: <span class="date-link" data-goto="apr-14" title="캘린더에서 보기">4/14(화) 📅</span></span></li>
+          <li><span class="li-dot">👤</span> 샌드위치: 차라(장우연) / 케이크: 메이(조아라) / 미니디저트: 그린(박종욱)</li>
+        </ul>
+      </div>
+
+      <!-- 케이크 단종 -->
+      <div class="detail-card md" id="card-cake-disc">
+        <div class="card-label">푸드 · 단종</div>
+        <h3>⛔ 케이크 3종 단종 안내</h3>
+        <ul>
+          <li><span class="li-dot">🫐</span> <b>블루베리 품은 부생카</b> (SKU 9300000006120)<br>
+            <span style="font-size:0.72em;color:#666">마지막 발주일: <span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) 📅</span> · 입고일: <span class="date-link" data-goto="mar-29" title="캘린더에서 보기">3/29(일) 📅</span> · 판매일: <span class="date-link" data-goto="mar-30" title="캘린더에서 보기">3/30(월) 📅</span></span></li>
+          <li><span class="li-dot">🖤</span> <b>블랙 사파이어 쏙 케이크</b> (SKU 9300000006128)<br>
+            <span style="font-size:0.72em;color:#666">마지막 발주일: <span class="date-link" data-goto="mar-28" title="캘린더에서 보기">3/28(토) 📅</span> · 입고일: <span class="date-link" data-goto="mar-30" title="캘린더에서 보기">3/30(월) 📅</span> · 판매일: <span class="date-link" data-goto="mar-31" title="캘린더에서 보기">3/31(화) 📅</span></span></li>
+          <li><span class="li-dot">🥚</span> <b>스틱 에그 타르트</b> (SKU 9300000005094)<br>
+            <span style="font-size:0.72em;color:#666">마지막 발주일: <span class="date-link" data-goto="apr-10" title="캘린더에서 보기">4/10(금) 📅</span> · 입고일: <span class="date-link" data-goto="apr-12" title="캘린더에서 보기">4/12(일) 📅</span> · 판매일: <span class="date-link" data-goto="apr-13" title="캘린더에서 보기">4/13(월) 📅</span></span></li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 메이(조아라) / 상품구매팀 베리(임경화)</li>
+        </ul>
+      </div>
+
+      <!-- 꾸러미백 -->
+      <div class="detail-card food" id="card-bundle">
+        <div class="card-label">푸드 · 별별 꾸러미백</div>
+        <h3>🎒 별별 꾸러미백 일괄입고</h3>
+        <ul>
+          <li><span class="li-dot">🆔</span> SKU: 9300000006237 (p)패키지푸드 꾸러미백</li>
+          <li><span class="li-dot">📦</span> 일괄입고: <b><span class="date-link" data-goto="mar-26" title="캘린더에서 보기">3/26(목) ~ 3/29(일) 📅</span></b></li>
+          <li><span class="li-dot">🔢</span> 입고 수량: 매장당 5~10EA (첨부파일 확인)</li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 소피(김소연)</li>
+        </ul>
+      </div>
+
+      <!-- ── 🛍️ MD ── -->
+      <div class="category-divider"><span>🛍️ MD</span></div>
+
+      <!-- MD -->
+      <div class="detail-card md" id="card-md">
+        <div class="card-label">MD</div>
+        <h3>KBO 콜라보레이션 MD · 34종</h3>
+        <ul>
+          <li><span class="li-dot">🛒</span> 이커머스 오픈: <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) 오전 10시 📅</span></b></li>
+          <li><span class="li-dot">📱</span> 스타벅스 앱 온라인 스토어 / 카카오 선물하기 / 네이버 / 무신사</li>
+          <li><span class="li-dot">⚠️</span> 구매제한: 품목별 최대 2개 (D+1일 후 해제)</li>
+        </ul>
+      </div>
+
+      <!-- KBO MD 매장 운영 -->
+      <div class="detail-card md" id="card-md-store">
+        <div class="card-label">KBO MD · 매장 운영</div>
+        <h3>KBO MD 판매 매장 안내</h3>
+        <ul>
+          <li><span class="li-dot">🗺️</span> 서울지역 / 더제주송당파크R / 더춘천의암호R: 전 구단 MD 판매</li>
+          <li><span class="li-dot">⚾</span> 그 외 매장: 팀 연고지 지역에서만 판매</li>
+          <li><span class="li-dot">⚠️</span> 연고지 내 일부 매장은 운영요청으로 미판매 구분 → 리스트 필히 확인</li>
+          <li><span class="li-dot">🖼️</span> 미판매 매장도 비주얼 CC 1종 입고 → 이커머스 안내용으로 꼭 게시</li>
+          <li><span class="li-dot">👤</span> 담당: MD팀 세라(박세정)</li>
+        </ul>
+      </div>
+
+      <!-- 스태카 테이블웨어 -->
+      <div class="detail-card logistics" id="card-stacka">
+        <div class="card-label">KBO MD 미운영매장 · 스태카</div>
+        <h3>🪴 스태카 테이블웨어 5종</h3>
+        <ul>
+          <li><span class="li-dot">📦</span> 1차 입고: <b><span class="date-link" data-goto="mar-26" title="캘린더에서 보기">3/26(목)까지 📅</span></b> / 2차 입고: <b><span class="date-link" data-goto="apr-3" title="캘린더에서 보기">4/3(금) 📅</span></b> (일부 매장)</li>
+          <li><span class="li-dot">🛍️</span> 상품: 머그볼 260ml 2P / 디저트플레이트 20cm 2P / 미니딥플레이트 15cm 2P / 브런치세트 3P / 플레이트 2P</li>
+          <li><span class="li-dot">📅</span> 진열 판매: <span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) 📅</span> KBO 프로모션 일정에 맞춰 진열</li>
+          <li><span class="li-dot">🖼️</span> MD장 비주얼: 상품 옆 함께 게시</li>
+          <li><span class="li-dot">🔢</span> 추가 발주 SKU: 9800000013087 (25 스태카 테이블웨어 안내 비주얼 CC)</li>
+          <li><span class="li-dot">👤</span> 담당: MD팀 레드(김경미)</li>
+        </ul>
+      </div>
+
+      <!-- 비아말차 변경 -->
+      <div class="detail-card md" id="card-via-matcha">
+        <div class="card-label">MD · 변경 운영</div>
+        <h3>🍵 비아 말차 국산 제품으로 변경</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 변경 적용: <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수)부터 📅</span></b> MD장 내 진열 및 판매</li>
+          <li><span class="li-dot">⛔</span> 기존 제품: SKU 11071894 비아 말차 5개입 — 8,800원 / 발주단위 6EA<br>
+            <span style="font-size:0.72em;color:#666">재고 소진 후 단종 · 기존+신규 병행 판매 가능</span></li>
+          <li><span class="li-dot">✅</span> 신규 제품: SKU 11182297 비아 말차 5개입 (로컬) — 8,800원 / 발주단위 10EA<br>
+            <span style="font-size:0.72em;color:#666">· 제주산 말차 사용 · 더욱 풍부한 말차 풍미<br>
+            · 표기 변경: Matcha → Malcha (한국식 표기)</span></li>
+          <li><span class="li-dot">📦</span> 일괄 입고: <b><span class="date-link" data-goto="apr-11" title="캘린더에서 보기">4/11(토) ~ 4/12(일) 📅</span></b> · 전 매장 10EA씩 (미판매 매장 제외)</li>
+          <li><span class="li-dot">📦</span> 자율발주: 5월 중 전환 예정</li>
+          <li><span class="li-dot">👤</span> 담당: MD팀 루카스(김경빈)</li>
+        </ul>
+      </div>
+
+      <!-- ── ⭐ 이벤트 ── -->
+      <div class="category-divider"><span>⭐ 이벤트</span></div>
+
+      <!-- Tri-Star -->
+      <div class="detail-card" id="card-tristar">
+        <div class="card-label">이벤트 · Tri-Star</div>
+        <h3>⭐ Tri-Star & 버디패스 별 증정</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> Tri-Star 기간: <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) ~ 4/2(목) 📅</span></b></li>
+          <li><span class="li-dot">⭐</span> 사오·딜리버스 주문 시 별 3개 / POS 주문 시 별 2개</li>
+          <li><span class="li-dot">🧋</span> 대상 음료: 바삭 피스타치오 바닐라 크림 콜드 브루 / 바삭 피스타치오 초콜릿 프라푸치노 / 베이스볼 매실 그린 티</li>
+          <li><span class="li-dot">👤</span> 대상: SR 그린·골드 회원 (방문별 적립 조건 충족 시)</li>
+          <li><span class="li-dot">🪪</span> 버디패스 추가 별: 최대 3개 · 지급일 <b><span class="date-link" data-goto="apr-16" title="캘린더에서 보기">4/16(목) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">조건: Tri-Star 참여 + <span class="date-link" data-goto="apr-13" title="캘린더에서 보기">4/13(월) 📅</span> 23:59까지 버디패스 구독 유지</span></li>
+          <li><span class="li-dot">⏳</span> 적립 별 유효기간: 60일</li>
+          <li><span class="li-dot">👤</span> 담당: SR팀 제시(김진실) / 베일리(심유민) 외</li>
+        </ul>
+      </div>
+
+      <!-- 이달의 샌드위치 이벤트 -->
+      <div class="detail-card food" id="card-sandwich-event">
+        <div class="card-label">이벤트 · 이달의 샌드위치</div>
+        <h3>🥪 이달의 샌드위치 할인 이벤트</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 전체 기간: <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1(수) ~ 5/31(일) 📅</span></b></li>
+          <li><span class="li-dot">🥪</span> 1종 운영: <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1~4/14 📅</span></b> — 베이컨 시저 치킨 샌드위치</li>
+          <li><span class="li-dot">🥪</span> 2종 운영: <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15~5/31 📅</span></b> — 베이컨 시저 치킨 샌드위치 + 치킨 & 머쉬룸 멜팅 치즈 샌드위치</li>
+          <li><span class="li-dot">⏰</span> 시간: 오전 11시 ~ 영업 종료</li>
+          <li><span class="li-dot">💰</span> 혜택: 제조 음료와 함께 구매 시 <b>2,000원 할인</b></li>
+          <li><span class="li-dot">☕</span> 대상 음료: 모든 제조 음료 T/G/V/Trenta · 리저브·특화·보틀 포함<br>
+            <span style="font-size:0.72em;color:#666">※ 제외: Short 사이즈, 시그니처 코르타도, 더블샷, 에스프레소 계열 (리저브는 포함)</span></li>
+          <li><span class="li-dot">🏪</span> 전 매장 (인천공항·미군부대·이달의샌드위치 미판매 매장 제외)</li>
+          <li><span class="li-dot">📦</span> 발주 증량 일정<br>
+            <span style="font-size:0.72em;color:#666">· 베이컨 시저 치킨 샌드위치: <span class="date-link" data-goto="mar-30" title="캘린더에서 보기">3/30(월) 📅</span> ~ <span class="date-link" data-goto="may-29" title="캘린더에서 보기">5/29(금) 📅</span> 발주분 증량<br>
+            · 치킨 &amp; 머쉬룸 멜팅 치즈 샌드위치: <span class="date-link" data-goto="apr-13" title="캘린더에서 보기">4/13(월) 📅</span> ~ <span class="date-link" data-goto="may-29" title="캘린더에서 보기">5/29(금) 📅</span> 발주분 증량</span></li>
+          <li><span class="li-dot">💳</span> POS·사이렌오더·딜리버스 가능 / 쿠폰·임직원 할인 중복 불가</li>
+          <li><span class="li-dot">🖼️</span> 비주얼 3종 입고: <b><span class="date-link" data-goto="apr-12" title="캘린더에서 보기">4/12(일)~4/13(월) 📅</span></b> · 게시: 4/15~5/31<br>
+            <span style="font-size:0.72em;color:#666">CC SKU 9800000013801 / 포스터 SKU 9800000013802 / 푸드POP SKU 9800000013803<br>※ 기존 1종 비주얼 폐기 후 게시</span></li>
+          <li><span class="li-dot">👤</span> 담당: 브랜드마케팅팀 스텔라(김하민) / 라온(정주연)</li>
+        </ul>
+      </div>
+
+      <!-- 베어리스타 가방걸이 -->
+      <div class="detail-card" id="card-bag-hook">
+        <div class="card-label">이벤트 · Lucky Starbucks Day</div>
+        <h3>👜 베어리스타 가방 걸이 증정 이벤트</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="apr-17" title="캘린더에서 보기">4/17(금) ~ 4/23(목) 📅</span></b> (소진 시 조기 종료 · 4/24부터 POS 팝업 미노출)</li>
+          <li><span class="li-dot">🎁</span> 조건: 제조 음료 포함 3만원 이상 구매 시 증정</li>
+          <li><span class="li-dot">🏪</span> 전 매장 (인천공항·미군부대·비발디파크·SSG랜더스필드1/2F·창원NC파크R1F 제외)</li>
+          <li><span class="li-dot">🛍️</span> 증정품: 26 책상 가방걸이 (SKU 9400000002357)<br>
+            <span style="font-size:0.72em;color:#666">· 규격: 약 43 x 43 x 44.5mm · 박스 1개당 40EA<br>
+            · 입고: 4/15(수)·4/16(목) · 매장별 차등 분배</span></li>
+          <li><span class="li-dot">🖼️</span> 비주얼 입고: <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) ~ 4/16(목) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">· CC (SKU 9800000013527): 푸드 쇼케이스 쪽 POS 앞 게시대<br>
+            · 출입문 포스터 (SKU 9800000013528): 매장 외부 왼쪽 출입문<br>
+            · 게시: 4/17(금) ~ 소진 시<br>
+            · 비주얼 2종 자율발주: 4/9(목)부터 가능</span></li>
+          <li><span class="li-dot">💳</span> POS·사이렌오더 가능 / 딜리버스 제외 / 1인 1회 2개 한정</li>
+          <li><span class="li-dot">✅</span> 리유저블 푸드백·토이스토리 야광 스티커 이벤트와 중복 증정 가능</li>
+          <li><span class="li-dot">⚠️</span> 잔여 재고: 지역 내 매장 이관 또는 5월 정기 반품 / 불량품 매장 내 폐기</li>
+          <li><span class="li-dot">👤</span> 담당: 브랜드마케팅팀 라온(정주연) / 민디(오상민)</li>
+        </ul>
+      </div>
+
+      <!-- 쿠팡이츠 슈퍼딜 -->
+      <div class="detail-card" id="card-coupang">
+        <div class="card-label">이벤트 · 쿠팡이츠</div>
+        <h3>🛵 쿠팡이츠 4월 슈퍼딜 2차</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="apr-20" title="캘린더에서 보기">4/20(월) ~ 4/26(일) 📅</span></b></li>
+          <li><span class="li-dot">💰</span> <b>4/20~4/26</b>: 1.4만원↑ 주문 시 <b>3,000원 할인</b></li>
+          <li><span class="li-dot">💰</span> <b>4/24~4/26</b>: 1.4만원↑ 주문 시 <b>6,000원 할인</b> (강화)</li>
+          <li><span class="li-dot">📱</span> 쿠팡이츠 앱 자동 할인 적용 · 쿠폰 선착순 소진 가능</li>
+          <li><span class="li-dot">⚠️</span> 쿠팡이츠 관련 고객 문의 → 쿠팡이츠 고객센터 안내</li>
+          <li><span class="li-dot">👤</span> 담당: 디지털기획팀 슬론(서꽃님)</li>
+        </ul>
+      </div>
+
+      <!-- 야구공 복조리 키링 -->
+      <div class="detail-card" id="card-keyring">
+        <div class="card-label">이벤트 · 랜더스 쇼핑 페스타</div>
+        <h3>⚾ 야구공 복조리 키링 증정</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) ~ 3/31(화) 📅</span></b> (소진 시 조기 종료)</li>
+          <li><span class="li-dot">🎁</span> 조건: 제조 음료 포함 3만원 이상 구매 시 증정</li>
+          <li><span class="li-dot">🏪</span> 전 매장 (미군부대·인천공항·비발디파크 제외)</li>
+          <li><span class="li-dot">⚾</span> 증정품 SKU: 9500000002360 (26 KBO 야구공 복조리 키링)</li>
+          <li><span class="li-dot">📦</span> 입고: <b><span class="date-link" data-goto="mar-25" title="캘린더에서 보기">3/25(수) ~ 3/26(목) 📅</span></b></li>
+          <li><span class="li-dot">🖼️</span> 비주얼 2종: CC (SKU 9800000013669) / 가로형 출입문 포스터 (SKU 9800000013669)<br>
+            <span style="font-size:0.72em;color:#666">게시: 3/27(금) ~ 소진 시</span></li>
+          <li><span class="li-dot">💳</span> POS·사이렌오더 가능 / 딜리버스 제외 / 1인 1회 2개 한정</li>
+          <li><span class="li-dot">⚠️</span> 4/1(수)부터 POS 팝업 미노출 · 잔여 재고 지역 내 매장 이관 또는 4월 정기 반품</li>
+          <li><span class="li-dot">🖨️</span> 비주얼 분실·훼손 시: 26 랜더스 CC 출력용 시안 첨부파일로 직접 출력 가능</li>
+          <li><span class="li-dot">👤</span> 담당: 브랜드마케팅팀 라온(정주연) / 민디(오상민) / 엔지(조소현)</li>
+        </ul>
+      </div>
+
+      <!-- 실리콘 푸드백 세트 -->
+      <div class="detail-card food" id="card-silicon-bag">
+        <div class="card-label">이벤트 · 랜더스 쇼핑 페스타</div>
+        <h3>🛍️ 스타벅스 실리콘 푸드백 세트 이벤트</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="apr-8" title="캘린더에서 보기">4/8(수) ~ 소진 시 📅</span></b></li>
+          <li><span class="li-dot">🛍️</span> 내용: 대상 음료와 실리콘 푸드백 세트 판매</li>
+          <li><span class="li-dot">🏪</span> 대상 매장: 전 매장 (인천공항·미군부대·R ONLY 매장·대상음료 미판매 매장 제외)</li>
+          <li><span class="li-dot">☕</span> 대상 음료 4종<br>
+            <span style="font-size:0.72em;color:#666">· 스타벅스 에어로카노 + 스프링 실리콘 푸드백 핑크 → <b>14,500원</b> (300원 할인)<br>
+            · 스위트 밀크 커피 + 스프링 실리콘 푸드백 그린 → <b>14,500원</b> (1,100원 할인)<br>
+            · 바삭 피스타치오 초콜릿 프라푸치노 + 스프링 실리콘 푸드백 핑크 → <b>15,500원</b> (2,100원 할인)<br>
+            · 바삭 피스타치오 바닐라 크림 콜드 브루 + 스프링 실리콘 푸드백 그린 → <b>15,500원</b> (1,900원 할인)<br>
+            ※ Tall 사이즈 기준 / 사이즈 변경 시 차액 추가</span></li>
+          <li><span class="li-dot">📋</span> 판매 방법: 대상 음료 포스팅 → 실리콘 푸드백 바코드 리딩 → 결제창 자동 할인 적용 → 결제</li>
+          <li><span class="li-dot">⚠️</span> POS 직접 구매만 가능 (사이렌오더·딜리버스 불가) / DT Zone 판매 불가</li>
+          <li><span class="li-dot">⚠️</span> 단품 판매 불가 · 대상 음료와 세트로만 판매</li>
+          <li><span class="li-dot">💳</span> 쿠폰 사용 불가 (무료음료·1+1·사이즈업·금액할인 쿠폰 모두 불가)<br>
+            <span style="font-size:0.72em;color:#666">※ 주문창에서 쿠폰 적용 가능하나 결제창에서 팝업 발생 → 쿠폰 미적용 주의<br>
+            ※ 실리콘 푸드백 임직원 할인 불가 (단, 세트 음료에는 임직원 할인 적용 가능)</span></li>
+          <li><span class="li-dot">✅</span> 적용 가능 혜택<br>
+            <span style="font-size:0.72em;color:#666">· 전 사이즈 선택 가능 (Tall 기준 + 사이즈 업 차액 추가)<br>
+            · 음료 커스텀·원두 변경 가능 (차액 발생)<br>
+            · KT 제휴 사이즈업·VIP 혜택 가능<br>
+            · 개인컵 리워드 및 10cup D/C 적용 가능</span></li>
+          <li><span class="li-dot">🔄</span> 교환증 미출력 / 단순 변심 교환·환불 불가</li>
+          <li><span class="li-dot">📋</span> 불량 접수 방법 숙지 필수 (첨부파일 확인)</li>
+          <li><span class="li-dot">🖼️</span> 비주얼 · 판촉물 SKU<br>
+            <span style="font-size:0.72em;color:#666">· 9300000006414 (p)스프링 실리콘 푸드백_핑크<br>
+            · 9300000006415 (p)스프링 실리콘 푸드백_그린<br>
+            · 9800000013415 26 3월 출입문포스터6<br>
+            · 9800000013460 26 3월 소개 CC6<br>
+            ※ 매장별 발주 수량·입고일 첨부파일 확인</span></li>
+          <li><span class="li-dot">👤</span> 비주얼·판촉물 담당: 브랜드마케팅팀 지니(김지윤) / 애니(장희수)</li>
+        </ul>
+      </div>
+
+      <!-- 리유저블 푸드백 -->
+      <div class="detail-card food" id="card-foodbag">
+        <div class="card-label">이벤트 · 랜더스 쇼핑 페스타</div>
+        <h3>🛍️ 리유저블 푸드백 증정</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1(수) ~ 4/30(목) 📅</span></b> (소진 시 종료)</li>
+          <li><span class="li-dot">🎁</span> 조건: 패키지 푸드 1만원 이상 구매 시 증정</li>
+          <li><span class="li-dot">🏪</span> 전 매장 (미군부대·인천공항·비발디파크·일부 스페셜 스토어 제외)</li>
+          <li><span class="li-dot">🛍️</span> 증정품 SKU: 9400000002419 (26 푸드백)</li>
+          <li><span class="li-dot">📦</span> 비주얼 입고: <b><span class="date-link" data-goto="mar-29" title="캘린더에서 보기">3/29(일) ~ 3/30(월) 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">CC SKU 9800000013574 / 출입문포스터 SKU 9800000013714 · 게시 4/1~</span></li>
+          <li><span class="li-dot">📦</span> 증정품 입고: <b><span class="date-link" data-goto="mar-29" title="캘린더에서 보기">3/29(일) ~ 4/3(금) 분할 입고 📅</span></b></li>
+          <li><span class="li-dot">💳</span> POS·사이렌오더 가능 / 딜리버스 제외 / 1인 1회 1개 한정 / 타 증정 이벤트 중복 가능</li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 차라(장우연) / 브랜드마케팅팀 엔지(조소현)</li>
+        </ul>
+      </div>
+
+      <!-- 원두/비아 말차 2+1 -->
+      <div class="detail-card md" id="card-roastery">
+        <div class="card-label">이벤트 · 랜더스 쇼핑 페스타</div>
+        <h3>☕ 원두 / 비아 말차 2+1 할인</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1(수) ~ 4/12(일) 📅</span></b></li>
+          <li><span class="li-dot">☕</span> 대상: 원두 2+1 (100g 3종·별빛 블렌드 250) / 비아 말차 2+1</li>
+          <li><span class="li-dot">🏪</span> 전 매장 (인천공항·MD미판매 매장 제외) / POS 직접 주문만 가능</li>
+          <li><span class="li-dot">⚠️</span> 원두·비아 교차 진행 불가<br>
+            <span style="font-size:0.72em;color:#666">원두: 비싼 2종 결제 후 팝업에서 가장 저렴한 품목 선택<br>비아 말차: 2개 결제 후 팝업에서 비아 말차 선택</span></li>
+          <li><span class="li-dot">🖼️</span> CC (SKU 9800000013680) 입고: <b><span class="date-link" data-goto="mar-28" title="캘린더에서 보기">3/28(토) ~ 3/29(일) 📅</span></b> · 게시: 4/1~4/12</li>
+          <li><span class="li-dot">👤</span> 담당: MD팀 루카스(김경빈)</li>
+        </ul>
+      </div>
+
+      <!-- 차이 티 라떼 -->
+      <div class="detail-card food" id="card-chai">
+        <div class="card-label">이벤트 · 랜더스 쇼핑 페스타</div>
+        <h3>🍵 차이 티 라떼 출시 + 선착순 무료 증정</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 판매 기간: <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1(수) ~ 4/14(화) 📅</span></b></li>
+          <li><span class="li-dot">🏪</span> 신세계 계열사 입점 매장 (스타필드·이마트·신세계백화점·트레이더스·프리미엄 아울렛)</li>
+          <li><span class="li-dot">🎁</span> 선착순 무료 증정: <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1(수) 하루 📅</span></b> · 매장별 선착순 30명 · Tall 사이즈 한정</li>
+          <li><span class="li-dot">💳</span> POS 직접 주문만 가능 (사이렌오더·딜리버스·외부채널 불가)</li>
+          <li><span class="li-dot">📋</span> 처리: 차이 티 라떼 포스팅 → [종이쿠폰] → "[랜쇼페] 선착순 차이 티 라떼" 선택</li>
+          <li><span class="li-dot">📦</span> 부재료 발주: 일괄 <b><span class="date-link" data-goto="mar-25" title="캘린더에서 보기">3/25~3/26 📅</span></b> · 자율 <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27~4/12 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">※ 차이 시럽 펌프(20ml) 미보유 매장: 계량컵 사용 (펌프 발주 불가)</span></li>
+          <li><span class="li-dot">🗝️</span> 키맵 운영<br>
+            <span style="font-size:0.72em;color:#666">· 4/1~4/14: POS 티바나 카테고리<br>· 4/15~4/28: POS 티바나/반품 카테고리 (미군부대·공항 제외)</span></li>
+          <li><span class="li-dot">📋</span> 레시피: 아카데미 음료 마킹 & 레시피 카드 매뉴얼 / 차이 티 라떼 제조 영상 참고</li>
+          <li><span class="li-dot">🏪</span> 대상 매장: 신세계 계열사 입점 112개점</li>
+          <li><span class="li-dot">⚠️</span> 사이즈·음료 변경 불가 / 개인컵·방문별 혜택 중복 불가</li>
+          <li><span class="li-dot">👤</span> 담당: 음료팀 JB(신재빈) / 브랜드마케팅팀 엔지(조소현)</li>
+        </ul>
+      </div>
+
+      <!-- 랜더스 쇼핑 페스타 온라인 -->
+      <div class="detail-card md" id="card-landers-online">
+        <div class="card-label">이벤트 · 랜더스 쇼핑 페스타 온라인</div>
+        <h3>🛒 랜더스 쇼핑 페스타 온라인 행사</h3>
+        <ul>
+          <li><span class="li-dot">📱</span> 스타벅스 APP 온라인 스토어 전용 (매장 운영 사항 없음)</li>
+          <li><span class="li-dot">🎟️</span> 럭키7 쿠폰팩 7만원: <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27 ~ 4/12 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">5천원×2 / 7천원×3 / 12천원×2 / 15천원×1 (각 구매조건 있음)</span></li>
+          <li><span class="li-dot">🎁</span> KBO 콜라보 포함 3만원↑ 구매 시 야구공 복조리 키링 증정: <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27~ 📅</span></b><br>
+            <span style="font-size:0.72em;color:#666">※ 별 3개 추가 증정 행사 취소</span></li>
+          <li><span class="li-dot">🏈</span> 야구공 각인 서비스 + 별 7개 증정: <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1~ 📅</span></b></li>
+          <li><span class="li-dot">🛍️</span> 베이스볼파크 MD 재출시 / 스포츠 키체인 20% OFF / 가방 반값 타임세일 (4/1·4/3·4/6·4/8): <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1~ 📅</span></b></li>
+          <li><span class="li-dot">💸</span> 지난 S/S 오프 클리어런스 최대 40% OFF (만우절 이벤트): <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1 📅</span></b></li>
+          <li><span class="li-dot">⚠️</span> 온라인 구매 제품 매장 교환·환불 불가 / 쿠폰팩 매장·딜리버스 사용 불가</li>
+          <li><span class="li-dot">👤</span> 담당: 커머스팀 레나(은화리) / 에이미(강가연)</li>
+        </ul>
+      </div>
+
+      <!-- 이벤트 TBD -->
+      <div class="detail-card">
+        <div class="card-label">이벤트</div>
+        <h3>프로모션 이벤트</h3>
+        <ul>
+          <li><span class="li-dot">📢</span> 추후 공지 예정</li>
+        </ul>
+      </div>
+
+    </div>
+
+      <!-- KBO 드레스코드 -->
+      <div class="detail-card" id="card-dresscode">
+        <div class="card-label">KBO 프로모션 · 드레스코드</div>
+        <h3>⚾ KBO 프로모션 파트너 드레스코드</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 기간: <b><span class="date-link" data-goto="mar-27" title="캘린더에서 보기">3/27(금) ~ 4/10(금) 📅</span></b> · 약 2주간</li>
+          <li><span class="li-dot">🏪</span> 대상: KBO MD 판매 매장 1,003개 (MD 판매 매장 리스트 참고)</li>
+          <li><span class="li-dot">👕</span> 드레스코드<br>
+            <span style="font-size:0.72em;color:#666">· 야구장 내 입점 매장: 홈 구단 유니폼 또는 일반 근무복<br>
+            · 야구장 외 매장: 지역 연고 구단 유니폼 또는 일반 근무복<br>
+            · 서울 지역·더춘천의암호R·더제주송당파크R: 콜라보 8개 구단 유니폼 또는 일반 근무복</span></li>
+          <li><span class="li-dot">✅</span> 유니폼은 파트너 본인 소유 · 선택 착용 (미희망 시 기본 근무복 착용 가능)</li>
+          <li><span class="li-dot">📄</span> 물류 입고 확인: (마케팅) 26 스프링1 KBO 서브 프로모션 물류 입고 비주얼 PDF 첨부파일 확인</li>
+          <li><span class="li-dot">👤</span> 드레스코드 담당: 운영지원 아이린(유이린)<br>
+            <span style="font-size:0.72em;color:#666">물류 비주얼 담당: 브랜드마케팅팀 린지(이서희) / 애니(장희수)</span></li>
+        </ul>
+      </div>
+
+      <!-- COW 프로모션 -->
+      <div class="detail-card logistics" id="card-cow">
+        <div class="card-label">운영 · COW 스케줄</div>
+        <h3>☕ 4월 COW 프로모션 스케줄</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> <b><span class="date-link" data-goto="mar-30" title="캘린더에서 보기">3/30~4/5 📅</span></b> — 하우스 블렌드 (SKU 7375) · 자율발주</li>
+          <li><span class="li-dot">📅</span> <b><span class="date-link" data-goto="apr-6" title="캘린더에서 보기">4/6~4/14 📅</span></b> — 하우스 블렌드 or 베란다 블렌드<br>
+            <span style="font-size:0.72em;color:#666">SKU 7375 or 11019754 · 자율발주</span></li>
+          <li><span class="li-dot">📅</span> <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15~5/3 📅</span></b> — 별빛 블렌드 (SKU 11170203) · 일괄입고 예정<br>
+            <span style="font-size:0.72em;color:#666">재고 소진 시 하우스 블렌드 (SKU 7375)로 전환</span></li>
+          <li><span class="li-dot">⚠️</span> <b>🔴 4/14 마감 시 필수 조치</b><br>
+            <span style="font-size:0.72em;color:#666">· 코어 오늘의 커피 sold out(판매 차단) 설정<br>
+            · 코어 아이스 커피 sold out(판매 차단) 설정<br>
+            · 4/15 별빛블렌드 1일차 시작 전 반드시 설정 완료</span></li>
+          <li><span class="li-dot">⚠️</span> <b>🔴 중요 변경사항 — 별빛블렌드 1일차(4/15) 필수 조치</b><br>
+            <span style="font-size:0.72em;color:#666">· 기존 초반 4일간 코어 브루드커피 비노출 시스템 → <b>미적용으로 변경</b><br>
+            · 1일차부터 매장에서 직접 코어 브루드커피 <b>sold out(판매 차단) 설정 필수</b><br>
+            · 미설정 시 고객 주문과 다른 음료 제공될 수 있음</span></li>
+          <li><span class="li-dot">🔄</span> 운영 방법<br>
+            <span style="font-size:0.72em;color:#666">▶ 1일차: 프로모션 브루드커피 노출 + 코어 브루드커피 sold out 설정<br>
+            ▶ 프로모션 원두 소진 후: 코어 브루드커피 노출 + 프로모션 브루드커피 sold out 설정</span></li>
+          <li><span class="li-dot">🏪</span> 대상: COW 운영 전 매장 / 가격·쿠폰 기준 기존 COW와 동일</li>
+          <li><span class="li-dot">👤</span> 프로모션 원두: 음료팀 헤이즐(홍정민) / 코어 원두: 상품구매팀 메이(정효진)</li>
+        </ul>
+      </div>
+
+      <!-- 코어케이크 명표 변경 -->
+      <div class="detail-card" id="card-cake-label">
+        <div class="card-label">운영 · 명표 변경</div>
+        <h3>🏷️ 코어 케이크 3종 명표 변경</h3>
+        <ul>
+          <li><span class="li-dot">📦</span> 명표 입고: <b><span class="date-link" data-goto="apr-3" title="캘린더에서 보기">4/3(금) ~ 4/4(토) 📅</span></b></li>
+          <li><span class="li-dot">📅</span> 적용일: <b><span class="date-link" data-goto="apr-7" title="캘린더에서 보기">4/7(화) 입고 상품부터 📅</span></b></li>
+          <li><span class="li-dot">🎂</span> (덕평MDC)부드러운 생크림 카스텔라 — SKU 9100000010236<br>
+            <span style="font-size:0.72em;color:#666">※ (부산MDC)부드러운 생크림 카스텔라는 변경 없음</span></li>
+          <li><span class="li-dot">🎂</span> 초코 품은 부생카 — SKU 9400000002050</li>
+          <li><span class="li-dot">🎂</span> 딸기 촉촉 초코 생크림 케이크 — SKU 9800000012263</li>
+          <li><span class="li-dot">⚠️</span> 반드시 표시사항 확인 후 게시 · 기존 명표 폐기</li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 메이(조아라)</li>
+        </ul>
+      </div>
+
+      <!-- 꾸러미·파예 명표 -->
+      <div class="detail-card" id="card-bundle-label">
+        <div class="card-label">운영 · 명표 변경</div>
+        <h3>🏷️ 별별꾸러미 · 파예 요거트 명표 입고</h3>
+        <ul>
+          <li><span class="li-dot">📦</span> 일괄 입고: <b><span class="date-link" data-goto="apr-8" title="캘린더에서 보기">4/8(수) ~ 4/9(목) 📅</span></b></li>
+          <li><span class="li-dot">🛍️</span> (P명표)별별꾸러미 — SKU 9800000013075</li>
+          <li><span class="li-dot">🥛</span> (명표)파예 무지방요거트 — SKU 9400000002483</li>
+          <li><span class="li-dot">⚠️</span> 신규 명표 입고 즉시 기존 명표 폐기</li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 소피(김소연) / 하이디(김세현)</li>
+        </ul>
+      </div>
+
+      <!-- RED+ 발주 중단 -->
+      <div class="detail-card md" id="card-redplus">
+        <div class="card-label">운영 · 발주 중단</div>
+        <h3>⛔ 하루 한 컵 RED+ 일시 발주 중단</h3>
+        <ul>
+          <li><span class="li-dot">🆔</span> SKU: 9300000005088 하루 한 컵 RED+</li>
+          <li><span class="li-dot">⛔</span> 발주 중단: <b><span class="date-link" data-goto="apr-15" title="캘린더에서 보기">4/15(수) ~ 4/18(토) 📅</span></b></li>
+          <li><span class="li-dot">✅</span> 발주 재개: <b><span class="date-link" data-goto="apr-19" title="캘린더에서 보기">4/19(일) 📅</span></b></li>
+          <li><span class="li-dot">📝</span> 사유: 부자재 교체 작업</li>
+          <li><span class="li-dot">👤</span> 담당: 푸드팀 소피(김소연) / 상품구매팀 니콜(정상희)</li>
+        </ul>
+      </div>
+
+      <!-- 4월 잡지 발주 -->
+      <div class="detail-card" id="card-magazine">
+        <div class="card-label">운영 · 잡지 발주</div>
+        <h3>📰 4월 잡지 자율발주 안내</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 발주 가능일: <b><span class="date-link" data-goto="mar-30" title="캘린더에서 보기">3/30(월)~ 📅</span></b> 자율 발주</li>
+          <li><span class="li-dot">📖</span> 짝수달 럭셔리 — SKU 5650299003</li>
+          <li><span class="li-dot">📖</span> 짝수달 Noblesse(노블레스) — SKU 5650299025</li>
+          <li><span class="li-dot">📖</span> 짝수달 SHINSEGAE — SKU 9800000002685<br>
+            <span style="font-size:0.72em;color:#666">※ 신세계백화점 입점·인근 매장·리저브 매장 누락 없이 발주 필수</span></li>
+          <li><span class="li-dot">📖</span> 짝수달 더 네이버 — SKU 9800000003762</li>
+          <li><span class="li-dot">📖</span> 짝수달 포춘코리아 — SKU 9800000009869</li>
+          <li><span class="li-dot">⚠️</span> 과월호 또는 자사와 협의되지 않은 잡지 매장 비치 금지</li>
+          <li><span class="li-dot">👤</span> 담당: 운영지원 레나(박나래)</li>
+        </ul>
+      </div>
+
+      <!-- 가습기 리콜 -->
+      <div class="detail-card md" id="card-humidifier">
+        <div class="card-label">운영 · 리콜</div>
+        <h3>🔔 가습기 리콜 매장 반납 접수</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 접수 기간: <b><span class="date-link" data-goto="apr-6" title="캘린더에서 보기">4/6(월)~ 📅</span></b> 지속 운영 / 접수 제한 없음</li>
+          <li><span class="li-dot">💰</span> 보상 변경<br>
+            <span style="font-size:0.72em;color:#666">· ~5/3(일) 회수: 모바일 카드 3만원권 (접수 전화번호로 MMS 월 2회 발송)<br>
+            · <span class="date-link" data-goto="may-4" title="캘린더에서 보기">5/4(월)~ 📅</span> 회수: <b>무료 음료 쿠폰(Tall) 5매</b> → 파트너가 접수 즉시 매장 지급<br>
+            ※ 5/4~ 상세 지급 프로세스 4월 중 재안내 예정</span></li>
+          <li><span class="li-dot">👤</span> 고객 Action<br>
+            <span style="font-size:0.72em;color:#666">접수 안내문 QR 스캔 → 접수 정보 입력 → 파트너 확인용 QR + 가습기 제시</span></li>
+          <li><span class="li-dot">🏪</span> 파트너 Action<br>
+            <span style="font-size:0.72em;color:#666">· 접수 안내문 매장 내 보관 (고객 문의 시 제공)<br>
+            · 고객 QR코드 POS 스캔 → 수량 확인 후 접수 승인<br>
+            · 접수 완료증 출력 및 고객 제공<br>
+            · 마감 시 반납 가습기 종이박스에 담아 반품 회수 존 비치</span></li>
+          <li><span class="li-dot">📋</span> 첨부: 파트너 가이드(FAQ·POS화면) / 접수 안내문(4/5 마감 시 출력 보관) / 반품 용지</li>
+        </ul>
+      </div>
+
+      <!-- ── ⚙️ 운영 ── -->
+      <div class="category-divider"><span>⚙️ 운영</span></div>
+
+      <!-- 유제품 변경 -->
+      <div class="detail-card logistics" id="card-dairy">
+        <div class="card-label">운영 · 유제품 변경</div>
+        <h3>🥛 매장별 운영 유제품 변경 안내</h3>
+        <ul>
+          <li><span class="li-dot">📅</span> 변경 일정: <b><span class="date-link" data-goto="apr-1" title="캘린더에서 보기">4/1(수) 발주부터 📅</span></b></li>
+          <li><span class="li-dot">🏪</span> 대상: 전사 매장 (매장별 운영 SKU 리스트 첨부파일 확인)</li>
+          <li><span class="li-dot">🔄</span> 변경 대상: 휘핑크림 / 연유</li>
+          <li><span class="li-dot">🥛</span> 휘핑크림 3종<br>
+            <span style="font-size:0.72em;color:#666">· 휘핑크림 데빅 듀오 윕 1L — SKU 9700000005586 (1L PET / 박스 6입)<br>
+            · 휘핑크림 프릿츠골드 — SKU 5410001004 (1L 테트라팩 / 박스 12입)<br>
+            · 휘핑크림 매일 1L — SKU 9700000000697 (1L 테트라팩 / 박스 10입)</span></li>
+          <li><span class="li-dot">🍯</span> 연유 2종<br>
+            <span style="font-size:0.72em;color:#666">· 연유 1L 매일유업 — SKU 9700000000643 (1L 테트라팩 / 박스 10입)<br>
+            · 연유 1L 리치 — SKU 9700000000644 (1L 테트라팩 / 박스 12입)</span></li>
+          <li><span class="li-dot">✅</span> 기존 매장 재고 지속 사용 가능 · 재고 소진 후 변경 제품 사용</li>
+          <li><span class="li-dot">⚠️</span> 매장마다 운영 SKU 상이 → <b>재고 소진 시까지 기존 원팩(한글표시사항) 반드시 보관</b></li>
+          <li><span class="li-dot">📋</span> 사용법 및 레시피 변경 없음</li>
+          <li><span class="li-dot">👤</span> 담당: 상품구매팀 대니(최준혁) / 음료팀 데릭(이범식)</li>
+        </ul>
+      </div>
+
+      <!-- 반품 & 배송 -->
+      <div class="detail-card logistics" id="card-logistics">
+        <div class="card-label">KBO Spring1 프로모션 · 물류 · 반품</div>
+        <h3>KBO Spring1 반품 & 배송 일정</h3>
+        <ul>
+          <li><span class="li-dot">🍵</span> <b>[제주 녹차] Core 원부재료 — <span class="date-link" data-goto="mar-24" title="캘린더에서 보기">3/24(화)부터 미리 발주 필요 📅</span></b><br><span style="font-size:0.72em;color:#666">SKU 추후 업데이트 예정</span></li>
+          <li><span class="li-dot">📦</span> 신규 원부재료 자율발주: <b><span class="date-link" data-goto="mar-25" title="캘린더에서 보기">3/25(수)~ 📅</span></b><br><span style="font-size:0.72em;color:#666">· 매실 베이스 (SKU 추후 업데이트)<br>· 핑크 리치 보바 (SKU 추후 업데이트)</span></li>
+          <li><span class="li-dot">↩️</span> KBO MD 반품 접수: <b><span class="date-link" data-goto="mar-23" title="캘린더에서 보기">3/23(월) 08:00 ~ 3/26(목) 17:50 📅</span></b></li>
+          <li><span class="li-dot">🚚</span> KBO 프로모션 배송 입고일: 매장별 상이 (공지 확인)</li>
+          <li><span class="li-dot">📝</span> 결품 확인 → SCM 베일(윤규호) 블라섬 접수</li>
+          <li><span class="li-dot">⏰</span> 미·과입고 → 당일 17시까지 배송특이사항 등록</li>
+          <li><span class="li-dot">📮</span> 재배송 누락 → SCM 에이미(이윤영) 블라섬 접수</li>
+        </ul>
+      </div>
+
+      <!-- 영양정보 POP -->
+      <div class="detail-card" id="card-pop">
+        <div class="card-label">운영 · 비주얼</div>
+        <h3>📋 3월 영양정보 POP 교체</h3>
+        <ul>
+          <li><span class="li-dot">📝</span> 변경 내용: 시그니처 초콜릿 카페인 정보 변경 (AP 글로벌 정책)</li>
+          <li><span class="li-dot">📅</span> 게시 시점: 기존 ICDM 560g 재고 소진 시 (3월 중순 예상)</li>
+          <li><span class="li-dot">🖨️</span> 매장별 POP 출력 후 사용 · 서울특화 매장은 서울특화 POP 출력</li>
+          <li><span class="li-dot">👤</span> 담당: 음료팀 헤이즐(홍정민)</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 칩 → 카드 이동
+  document.querySelectorAll('[data-target]').forEach(function(chip) {
+    chip.style.cursor = 'pointer';
+    chip.addEventListener('click', function() {
+      var card = document.getElementById(this.getAttribute('data-target'));
+      if (!card) return;
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.style.outline = '2.5px solid #00704A';
+      card.style.boxShadow = '0 0 0 4px rgba(0,112,74,0.15)';
+      setTimeout(function() { card.style.outline = ''; card.style.boxShadow = ''; }, 1800);
+    });
+  });
+
+  // 날짜 링크 → 캘린더 셀 이동
+  document.querySelectorAll('.date-link').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var cell = document.getElementById(this.getAttribute('data-goto'));
+      if (!cell) return;
+      cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      cell.style.outline = '2.5px solid #CBA258';
+      cell.style.boxShadow = '0 0 0 4px rgba(203,162,88,0.2)';
+      setTimeout(function() { cell.style.outline = ''; cell.style.boxShadow = ''; }, 1800);
+    });
+  });
+});
+</script>
+</body>
+</html>
