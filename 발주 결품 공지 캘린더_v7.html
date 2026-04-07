@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>결품 공지 캘린더</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f6fb;
+  --sur:#ffffff;
+  --sur2:#f0f2f8;
+  --bor:#e2e6f0;
+  --bor2:#cdd2e8;
+  --green:#0ea96b;
+  --green-bg:#e8f9f2;
+  --red:#e8334a;
+  --red-bg:#fdedef;
+  --amber:#c97d00;
+  --amber-bg:#fff8e6;
+  --blue:#2f7deb;
+  --blue-bg:#eaf2ff;
+  --purple:#7c3aed;
+  --purple-bg:#f3effe;
+  --txt:#1a1d2e;
+  --txt2:#4a5270;
+  --muted:#8b92b0;
+  --r:10px;
+  --shadow:0 1px 4px rgba(30,40,90,.08);
+  --shadow-md:0 4px 16px rgba(30,40,90,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--txt);font-family:'Noto Sans KR',sans-serif;min-height:100vh;}
+
+/* ── HEADER ── */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--bor);
+  padding:0 22px;height:54px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:var(--shadow);
+}
+.logo{background:var(--red);color:#fff;font-size:10px;font-weight:900;
+  padding:3px 8px;border-radius:5px;letter-spacing:.08em;margin-right:10px;flex-shrink:0;}
+header h1{font-size:14px;font-weight:800;color:var(--txt);}
+.hdr-l{display:flex;align-items:center;}
+.mnav{display:flex;align-items:center;gap:4px;}
+.nb{background:var(--sur2);border:1px solid var(--bor);color:var(--txt2);
+  width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.nb:hover{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+.ml{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;min-width:76px;text-align:center;color:var(--txt);}
+
+/* ── PAGE TABS (캘린더 / 특이사항) ── */
+.page-tabs{
+  display:flex;align-items:center;gap:0;
+  background:var(--sur);border-bottom:1px solid var(--bor);
+  padding:0 22px;
+}
+.ptab{
+  display:flex;align-items:center;gap:6px;
+  height:44px;padding:0 18px;cursor:pointer;
+  font-size:12px;font-weight:700;color:var(--muted);
+  border-bottom:2px solid transparent;transition:all .18s;
+  white-space:nowrap;
+}
+.ptab:hover{color:var(--txt2);}
+.ptab.on{color:var(--blue);border-bottom-color:var(--blue);}
+.ptab.on.notice-tab{color:var(--purple);border-bottom-color:var(--purple);}
+.ptab .pbadge{
+  font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;
+  background:var(--sur2);color:var(--muted);
+}
+.ptab.on .pbadge{background:var(--blue-bg);color:var(--blue);}
+.ptab.on.notice-tab .pbadge{background:var(--purple-bg);color:var(--purple);}
+
+/* ── FILTER BAR ── */
+.filter-bar{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:9px 22px;border-bottom:1px solid var(--bor);
+  background:var(--sur);
+}
+.filter-label{font-size:10px;color:var(--muted);font-weight:700;margin-right:2px;white-space:nowrap;}
+.fchip{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1.5px solid var(--bor);background:var(--sur2);color:var(--txt2);
+  transition:all .18s;white-space:nowrap;
+}
+.fchip .fdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.fchip .fcnt{font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;
+  background:var(--bg);color:var(--muted);}
+.fchip:hover{border-color:var(--bor2);color:var(--txt);}
+.fchip.on-all    {background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+.fchip.on-all .fcnt{background:rgba(47,125,235,.12);color:var(--blue);}
+.fchip.on-s{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+.fchip.on-s .fcnt{background:rgba(232,51,74,.12);color:var(--red);}
+.fchip.on-o{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+.fchip.on-o .fcnt{background:rgba(14,169,107,.12);color:var(--green);}
+.fchip.on-a{background:var(--amber-bg);border-color:var(--amber);color:var(--amber);}
+.fchip.on-a .fcnt{background:rgba(201,125,0,.12);color:var(--amber);}
+.sep{width:1px;height:16px;background:var(--bor);flex-shrink:0;}
+.rchip{
+  padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;
+  border:1.5px solid var(--bor);background:var(--sur2);color:var(--txt2);
+  transition:all .18s;white-space:nowrap;
+}
+.rchip:hover{border-color:var(--bor2);color:var(--txt);}
+.rchip.on-all  {background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+.rchip.on-r전체{background:var(--purple-bg);border-color:var(--purple);color:var(--purple);}
+.rchip.on-r중부{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+.rchip.on-r남부{background:var(--amber-bg);border-color:var(--amber);color:var(--amber);}
+
+/* ── PAGE VIEWS ── */
+.page-view{display:none;}
+.page-view.active{display:block;}
+
+/* ── MAIN LAYOUT ── */
+.main-wrap{display:flex;align-items:flex-start;}
+
+/* ── CALENDAR ── */
+.cal-section{flex:1;min-width:0;padding:14px 16px 40px 22px;}
+.dh{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px;}
+.dhd{text-align:center;font-size:10px;font-weight:800;color:var(--muted);padding:4px 0;letter-spacing:.05em;}
+.dhd.sun{color:#e85b5b;}
+.dhd.sat{color:var(--blue);}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+
+.dc{
+  background:var(--sur);border:1.5px solid var(--bor);border-radius:var(--r);
+  min-height:100px;padding:7px 6px 6px;transition:all .18s;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.dc.empty{background:transparent;border-color:transparent;box-shadow:none;}
+.dc.today{border-color:var(--blue);box-shadow:0 0 0 2px rgba(47,125,235,.12);}
+.dc.hev{cursor:pointer;}
+.dc.hev:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.dc.sun .dn{color:#e85b5b;}
+.dc.sat .dn{color:var(--blue);}
+.dc.today .dn{color:var(--blue);font-weight:900;}
+.dc.has-notice{border-color:rgba(124,58,237,.35);background:rgba(124,58,237,.02);}
+
+.dn{
+  font-family:'DM Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--txt2);margin-bottom:4px;display:flex;align-items:center;gap:3px;
+}
+.tdot{width:6px;height:6px;background:var(--blue);border-radius:50%;}
+
+/* event chips */
+.ec{
+  display:flex;align-items:center;gap:3px;padding:2px 5px;border-radius:4px;
+  font-size:9px;font-weight:600;margin-bottom:2px;overflow:hidden;white-space:nowrap;max-width:100%;
+}
+.ec .cdot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.ec .rt{font-size:7px;font-weight:800;padding:1px 3px;border-radius:3px;flex-shrink:0;}
+.ec-nm{overflow:hidden;text-overflow:ellipsis;}
+.ts-c{background:var(--red-bg);color:var(--red);}     .ts-c .cdot{background:var(--red);}
+.to-c{background:var(--green-bg);color:var(--green);} .to-c .cdot{background:var(--green);}
+.ta-c{background:var(--amber-bg);color:var(--amber);} .ta-c .cdot{background:var(--amber);}
+.r전체-c{background:var(--purple-bg);color:var(--purple);}
+.r중부-c{background:var(--blue-bg);color:var(--blue);}
+.r남부-c{background:var(--amber-bg);color:var(--amber);}
+.morebtn{font-size:8px;color:var(--muted);padding:1px 3px;margin-top:1px;}
+
+/* 캘린더 내 특이사항 점 */
+.notice-dot-row{display:flex;align-items:center;gap:3px;margin-top:3px;}
+.notice-dot{width:5px;height:5px;border-radius:50%;background:var(--purple);flex-shrink:0;}
+.notice-dot-label{font-size:8px;color:var(--purple);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── SIDE PANEL ── */
+.side-panel{
+  width:310px;flex-shrink:0;padding:14px 22px 40px 0;
+  position:sticky;top:54px;max-height:calc(100vh - 54px);
+  overflow-y:auto;display:none;
+}
+.side-panel.open{display:block;}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.panel-title{font-size:13px;font-weight:800;color:var(--txt);}
+.panel-close{
+  background:var(--sur2);border:1px solid var(--bor);color:var(--muted);
+  width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+}
+.panel-close:hover{color:var(--txt);}
+.date-group{margin-bottom:14px;}
+.date-group-hdr{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:var(--sur2);border:1.5px solid var(--bor);border-radius:8px;margin-bottom:5px;
+}
+.dg-day{font-family:'DM Mono',monospace;font-size:18px;font-weight:800;color:var(--txt);}
+.dg-meta{display:flex;flex-direction:column;gap:1px;}
+.dg-ym{font-size:9px;color:var(--muted);}
+.dg-dow{font-size:11px;font-weight:700;color:var(--txt2);}
+.dg-count{margin-left:auto;font-size:10px;font-weight:700;background:var(--sur);border:1px solid var(--bor);color:var(--muted);padding:2px 8px;border-radius:10px;}
+.sum-item{
+  display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:7px;
+  background:var(--sur);border:1.5px solid var(--bor);margin-bottom:4px;cursor:pointer;
+  transition:all .15s;text-decoration:none;
+}
+.sum-item:hover{border-color:var(--blue);background:var(--blue-bg);transform:translateX(3px);}
+.sum-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.sum-region{font-size:8px;font-weight:800;padding:1px 5px;border-radius:3px;flex-shrink:0;}
+.sum-name{font-size:11px;font-weight:600;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.sum-item:hover .sum-name{color:var(--blue);}
+.sum-arrow{font-size:11px;color:var(--muted);flex-shrink:0;}
+.approx-badge{font-size:8px;font-weight:700;color:var(--amber);background:var(--amber-bg);border:1px solid rgba(201,125,0,.2);padding:1px 5px;border-radius:3px;flex-shrink:0;}
+.panel-empty{color:var(--muted);font-size:12px;text-align:center;padding:30px 0;}
+
+/* ── 특이사항 페이지 ── */
+.notice-page{padding:20px 22px 60px;}
+.notice-page-hdr{
+  display:flex;align-items:center;gap:10px;margin-bottom:20px;
+  padding-bottom:14px;border-bottom:1.5px solid var(--bor);
+}
+.notice-page-title{font-size:16px;font-weight:900;color:var(--txt);}
+.notice-page-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.notice-count{
+  margin-left:auto;background:var(--purple-bg);border:1px solid rgba(124,58,237,.2);
+  color:var(--purple);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
+}
+
+/* 날짜별 특이사항 그룹 */
+.notice-date-group{margin-bottom:28px;}
+.notice-date-hdr{
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;
+}
+.notice-date-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--purple-bg);border:1.5px solid rgba(124,58,237,.25);
+  border-radius:20px;padding:4px 14px;
+}
+.notice-date-txt{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--purple);}
+.notice-date-dow{font-size:11px;font-weight:700;color:var(--purple);opacity:.7;}
+.notice-date-line{flex:1;height:1.5px;background:var(--bor);}
+
+/* 특이사항 상세 카드 */
+.ncard{
+  background:var(--sur);border:1.5px solid rgba(124,58,237,.2);border-radius:12px;
+  padding:16px 18px;margin-bottom:12px;
+  box-shadow:0 2px 8px rgba(124,58,237,.06);
+}
+.ncard-header{
+  display:flex;align-items:flex-start;gap:10px;
+  padding-bottom:12px;border-bottom:1px solid var(--bor);margin-bottom:12px;
+}
+.ncard-num{
+  width:24px;height:24px;border-radius:7px;flex-shrink:0;
+  background:var(--purple);color:#fff;font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;margin-top:1px;
+}
+.ncard-title{font-size:13px;font-weight:800;color:var(--txt);line-height:1.45;flex:1;}
+.ncard-manager{
+  display:inline-flex;align-items:center;gap:4px;margin-top:5px;
+  font-size:10px;color:var(--muted);
+  background:var(--sur2);border:1px solid var(--bor);
+  padding:2px 8px;border-radius:5px;
+}
+.ncard-body{display:flex;flex-direction:column;gap:10px;}
+.ncard-section{}
+.ncard-sec-label{
+  font-size:10px;font-weight:800;color:var(--purple);letter-spacing:.06em;
+  margin-bottom:6px;display:flex;align-items:center;gap:5px;
+}
+.ncard-sec-label::before{content:'';width:3px;height:12px;background:var(--purple);border-radius:2px;}
+.sku-list{display:flex;flex-direction:column;gap:3px;}
+.sku-row{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 10px;background:var(--bg);border:1px solid var(--bor);
+  border-radius:7px;font-size:11px;
+}
+.sku-code{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;}
+.sku-name{color:var(--txt2);font-weight:500;}
+.ncard-text{
+  font-size:11.5px;color:var(--txt2);line-height:1.65;
+  padding:9px 12px;background:var(--bg);border-radius:7px;border:1px solid var(--bor);
+}
+.ncard-warn{
+  font-size:11.5px;color:var(--amber);line-height:1.65;
+  padding:9px 12px;background:var(--amber-bg);
+  border:1px solid rgba(201,125,0,.2);border-radius:7px;
+}
+
+/* ── MODAL ── */
+.ov{position:fixed;inset:0;background:rgba(20,25,50,.45);backdrop-filter:blur(8px);
+  z-index:200;display:none;align-items:flex-start;justify-content:center;
+  padding:20px 14px;overflow-y:auto;}
+.ov.on{display:flex;}
+.modal{background:var(--sur);border:1.5px solid var(--bor);border-radius:14px;
+  width:100%;max-width:680px;margin:auto;animation:up .2s ease;flex-shrink:0;
+  box-shadow:var(--shadow-md);}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.mh{padding:16px 18px 13px;border-bottom:1px solid var(--bor);
+  display:flex;align-items:flex-start;justify-content:space-between;
+  position:sticky;top:0;background:var(--sur);z-index:1;border-radius:14px 14px 0 0;}
+.mt{font-size:15px;font-weight:800;color:var(--txt);}
+.ms{font-size:11px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace;}
+.mx{background:var(--sur2);border:1px solid var(--bor);color:var(--muted);
+  width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mx:hover{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+.mb{padding:14px 18px 22px;}
+.sec-hdr{
+  font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.1em;
+  margin:16px 0 8px;display:flex;align-items:center;gap:6px;
+}
+.sec-hdr::after{content:'';flex:1;height:1px;background:var(--bor);}
+.sec-hdr:first-child{margin-top:0;}
+.dcard{background:var(--bg);border:1.5px solid var(--bor);border-radius:10px;
+  padding:12px 14px;margin-bottom:8px;}
+.dcard:last-child{margin-bottom:0;}
+.dcard-top{display:flex;align-items:flex-start;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;}
+.b-s{background:var(--red-bg);color:var(--red);}
+.b-o{background:var(--green-bg);color:var(--green);}
+.b-a{background:var(--amber-bg);color:var(--amber);}
+.b-전체{background:var(--purple-bg);color:var(--purple);}
+.b-중부{background:var(--blue-bg);color:var(--blue);}
+.b-남부{background:var(--amber-bg);color:var(--amber);}
+.dcard-info{min-width:0;}
+.dcard-nm{font-size:13px;font-weight:700;color:var(--txt);line-height:1.4;}
+.dcard-sku{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+.drows{display:flex;flex-direction:column;gap:5px;}
+.drow{display:grid;grid-template-columns:88px 1fr;gap:6px;font-size:11.5px;align-items:baseline;}
+.drl{color:var(--muted);font-weight:600;}
+.drv{color:var(--txt2);line-height:1.55;}
+.drv b{color:var(--txt);font-weight:700;}
+.drv.g{color:var(--green);font-weight:700;}
+.drv .a{color:var(--amber);font-weight:600;}
+.approx-warn{margin-top:10px;padding:9px 12px;
+  background:var(--amber-bg);border:1px solid rgba(201,125,0,.25);
+  border-radius:7px;font-size:11px;color:var(--amber);line-height:1.6;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--bor2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-l">
+    <span class="logo">결품공지</span>
+    <h1>발주결품 공지 캘린더</h1>
+  </div>
+  <div class="mnav">
+    <button class="nb" id="prevBtn">‹</button>
+    <span class="ml" id="monthLabel"></span>
+    <button class="nb" id="nextBtn">›</button>
+  </div>
+</header>
+
+<!-- PAGE TABS -->
+<div class="page-tabs">
+  <div class="ptab on" id="ptab-cal" onclick="setPage('cal',this)">
+    📅 캘린더 <span class="pbadge" id="cnt-total">0</span>
+  </div>
+  <div class="ptab notice-tab" id="ptab-notice" onclick="setPage('notice',this)">
+    📌 특이사항 <span class="pbadge" id="cnt-notice">0</span>
+  </div>
+</div>
+
+<!-- ═══════════════ 캘린더 페이지 ═══════════════ -->
+<div class="page-view active" id="page-cal">
+
+  <div class="filter-bar">
+    <span class="filter-label">유형</span>
+    <div class="fchip on-all" id="f-all" onclick="setType('all',this)">
+      <div class="fdot" style="background:var(--blue)"></div>
+      전체 <span class="fcnt" id="cnt-all">0</span>
+    </div>
+    <div class="fchip" id="f-shortage" onclick="setType('shortage',this)">
+      <div class="fdot" style="background:var(--red)"></div>
+      결품 <span class="fcnt" id="cnt-shortage">0</span>
+    </div>
+    <div class="fchip" id="f-order" onclick="setType('order',this)">
+      <div class="fdot" style="background:var(--green)"></div>
+      발주가능일 <span class="fcnt" id="cnt-order">0</span>
+    </div>
+    <div class="fchip" id="f-approx" onclick="setType('approx',this)">
+      <div class="fdot" style="background:var(--amber)"></div>
+      일정미확정 <span class="fcnt" id="cnt-approx">0</span>
+    </div>
+    <div class="sep"></div>
+    <span class="filter-label">권역</span>
+    <div class="rchip on-all" id="r-all"  onclick="setRegion('all',this)">전체</div>
+    <div class="rchip" id="r-전체" onclick="setRegion('전체',this)">전체권역</div>
+    <div class="rchip" id="r-중부" onclick="setRegion('중부',this)">중부권</div>
+    <div class="rchip" id="r-남부" onclick="setRegion('남부',this)">남부권</div>
+  </div>
+
+  <div class="main-wrap">
+    <div class="cal-section">
+      <div class="dh">
+        <div class="dhd sun">SUN</div><div class="dhd">MON</div><div class="dhd">TUE</div>
+        <div class="dhd">WED</div><div class="dhd">THU</div><div class="dhd">FRI</div><div class="dhd sat">SAT</div>
+      </div>
+      <div class="cg" id="calGrid"></div>
+    </div>
+
+    <div class="side-panel" id="sidePanel">
+      <div class="panel-hdr">
+        <div class="panel-title" id="panelTitle">일자별 요약</div>
+        <button class="panel-close" onclick="closePanel()">✕</button>
+      </div>
+      <div id="panelBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 특이사항 페이지 ═══════════════ -->
+<div class="page-view" id="page-notice">
+  <div class="notice-page">
+    <div class="notice-page-hdr">
+      <div>
+        <div class="notice-page-title">📌 특이사항 공지</div>
+        <div class="notice-page-sub">전 매장 파트너 대상 · 공지일 기준 최신순</div>
+      </div>
+      <div class="notice-count" id="noticeTotalBadge">0건</div>
+    </div>
+    <div id="noticePageBody"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="ov" id="overlay" onclick="closeOv(event)">
+  <div class="modal" id="modal">
+    <div class="mh">
+      <div><div class="mt" id="mTitle"></div><div class="ms" id="mSub"></div></div>
+      <button class="mx" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="mb" id="mBody"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// 결품·발주 데이터
+// ══════════════════════════════════════════════════
+const DATA = [
+  { id:1,  region:'전체', type:'shortage', approx:true,  approxLabel:'추후 안내 예정',
+    date:'2026-04-30', sku:'9400000001281', cat:'소모품',
+    name:'21 딜리버스 로테이션 핫 리드 12/16/20oz',
+    orderDate:{중부:'',남부:''}, remark:'추후 안내 예정', altSku:'' },
+  { id:2,  region:'전체', type:'order', approx:false,
+    date:'2026-04-10', sku:'11173136', cat:'MD',
+    name:'파이크 플레이스 로스트 100g',
+    orderDate:{중부:'2026.04.10',남부:''}, remark:'', altSku:'' },
+  { id:3,  region:'전체', type:'order', approx:false,
+    date:'2026-04-10', sku:'11173135', cat:'MD',
+    name:'디카페인 하우스 블렌드 100g',
+    orderDate:{중부:'2026.04.10',남부:''}, remark:'', altSku:'' },
+  { id:4,  region:'전체', type:'order', approx:false,
+    date:'2026-04-10', sku:'11173138', cat:'MD',
+    name:'카페 베로나 100g',
+    orderDate:{중부:'2026.04.10',남부:''}, remark:'', altSku:'' },
+  { id:5,  region:'전체', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9700000000706', cat:'원재료',
+    name:'블라썸 토핑 50G',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:6,  region:'전체', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9700000000708', cat:'원재료',
+    name:'체리블라썸 스트로베리 소스 1,300G',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:7,  region:'전체', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000003762', cat:'소모품',
+    name:'짝수달 더 네이버',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:8,  region:'전체', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000009869', cat:'소모품',
+    name:'짝수달 포춘코리아',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:9,  region:'전체', type:'shortage', approx:true,  approxLabel:'4월 중순 입고예정',
+    date:'2026-04-20', sku:'9300000006005', cat:'MD',
+    name:'SS 스탠디 시그니처 핸처 텀블러 887ml',
+    orderDate:{중부:'',남부:''}, remark:'4월 중순 입고예정', altSku:'' },
+  { id:10, region:'전체', type:'shortage', approx:false,
+    date:'2026-04-09', sku:'11170203', cat:'원재료',
+    name:'벨벳 블렌드 5LB',
+    orderDate:{중부:'',남부:''}, remark:'스프링2 일괄입고 진행 (4/9, 10 발주)', altSku:'' },
+  { id:11, region:'중부', type:'shortage', approx:true,  approxLabel:'추후 안내 예정',
+    date:'2026-04-30', sku:'9300000004812', cat:'MD',
+    name:'경동1960 핸들 우드 트레이',
+    orderDate:{중부:'',남부:''}, remark:'추후 안내 예정', altSku:'' },
+  { id:12, region:'중부', type:'order', approx:false,
+    date:'2026-04-09', sku:'9400000001783', cat:'소모품',
+    name:'식기세척기 세제 홀더(세제용봉리)',
+    orderDate:{중부:'2026.04.09',남부:''}, remark:'', altSku:'' },
+  { id:13, region:'중부', type:'order', approx:false,
+    date:'2026-04-17', sku:'9300000005083', cat:'유상소모품',
+    name:'쇼핑백Reserve중(100개입_판매용)',
+    orderDate:{중부:'2026.04.17',남부:''}, remark:'', altSku:'' },
+  { id:14, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9400000002393', cat:'소모품',
+    name:'26 스프레 핫 컵 12oz',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료, Core 컵 SKU로 발주요망',
+    altSku:'핫 컵 12oz (9400000000956)' },
+  { id:15, region:'중부', type:'shortage', approx:true,  approxLabel:'추후 안내 예정',
+    date:'2026-04-30', sku:'5620001038', cat:'소모품',
+    name:'플라스틱 사각 보관통',
+    orderDate:{중부:'',남부:''}, remark:'추후 안내 예정', altSku:'' },
+  { id:16, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9700000000707', cat:'원재료',
+    name:'고양이 귀 사인팬 32PC',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:17, region:'중부', type:'shortage', approx:true,  approxLabel:'재고소진완료, 추후안내예정',
+    date:'2026-04-30', sku:'9400000002397', cat:'소모품',
+    name:'투명 마스크',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료, 추후안내예정', altSku:'' },
+  { id:18, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000012435', cat:'소모품',
+    name:'25 시그니처 코어 비주얼_통합형MD장용',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:19, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000012819', cat:'소모품',
+    name:'마이컵_텀블러세척기 안내 비주얼 3종 세트',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:20, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000013296', cat:'소모품',
+    name:'25 리저브 디카페인_엽서',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:21, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000013574', cat:'소모품',
+    name:'26 랜디스CC 1',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:22, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000013682', cat:'소모품',
+    name:'26 4월 이달의 샌드위치 포스터',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:23, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000013803', cat:'소모품',
+    name:'26 4/5일 이달의 샌드위치 푸드 POP',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:24, region:'중부', type:'shortage', approx:true,  approxLabel:'5월 초 입고예정',
+    date:'2026-05-01', sku:'9300000005113', cat:'MD',
+    name:'SS 안녕 경기 텀블러 355ml',
+    orderDate:{중부:'',남부:''}, remark:'5월 초 입고예정', altSku:'' },
+  { id:25, region:'중부', type:'order', approx:false,
+    date:'2026-04-11', sku:'9300000005865', cat:'MD',
+    name:'한복 베어리스타 키체인(남자)',
+    orderDate:{중부:'2026.04.11',남부:''}, remark:'', altSku:'' },
+  { id:26, region:'중부', type:'shortage', approx:true,  approxLabel:'4월 중순 입고예정',
+    date:'2026-04-20', sku:'9300000006494', cat:'MD',
+    name:'한글 시온 머그 414ml',
+    orderDate:{중부:'',남부:''}, remark:'4월 중순 입고예정', altSku:'' },
+  { id:27, region:'남부', type:'shortage', approx:true,  approxLabel:'추후 안내 예정',
+    date:'2026-04-30', sku:'9300000005308', cat:'MD',
+    name:'패밀리 컵 세트',
+    orderDate:{중부:'',남부:''}, remark:'추후 안내 예정', altSku:'' },
+  { id:28, region:'남부', type:'shortage', approx:true,  approxLabel:'4월 중순이후 입고예정',
+    date:'2026-04-20', sku:'9400000001667', cat:'소모품',
+    name:'명찰(파트너용)(5개입)',
+    orderDate:{중부:'',남부:''}, remark:'4월 중순이후 입고예정', altSku:'' },
+  { id:29, region:'남부', type:'order', approx:false,
+    date:'2026-04-13', sku:'9400000000887', cat:'소모품',
+    name:'리저브 MD박스(중) 일체형 30개입',
+    orderDate:{중부:'',남부:'2026.04.13'}, remark:'', altSku:'' },
+  { id:30, region:'남부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9700000000703', cat:'원재료',
+    name:'백도 파우더 500G',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:31, region:'남부', type:'order', approx:false,
+    date:'2026-04-08', sku:'11017011', cat:'MD',
+    name:'카페 베로나 250G',
+    orderDate:{중부:'',남부:'2026.04.08'}, remark:'', altSku:'' },
+  { id:32, region:'남부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9400000001861', cat:'소모품',
+    name:'골드브루어 커버',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료, 대체 SKU 발주요망',
+    altSku:'26 골드브루어 커버 (9400000002367)' },
+  { id:33, region:'남부', type:'shortage', approx:false,
+    date:'2026-04-07', sku:'9800000012085', cat:'소모품',
+    name:'25 스타벅스 모닝세트CC',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:34, region:'남부', type:'order', approx:false,
+    date:'2026-04-09', sku:'9300000006228', cat:'MD',
+    name:'(p)크리아 리유저블백 M',
+    orderDate:{중부:'',남부:'2026.04.09'}, remark:'', altSku:'' },
+  { id:35, region:'남부', type:'shortage', approx:true,  approxLabel:'4월 중순 입고예정',
+    date:'2026-04-20', sku:'9300000006346', cat:'MD',
+    name:'SS 배꽃 권텐 텀블러 237ml',
+    orderDate:{중부:'',남부:''}, remark:'4월 중순 입고예정', altSku:'' },
+  { id:36, region:'남부', type:'order', approx:false,
+    date:'2026-04-09', sku:'9300000003183', cat:'MD',
+    name:'다양령 DTR 대시보드 피규어 키체인',
+    orderDate:{중부:'',남부:'2026.04.09'}, remark:'', altSku:'' },
+  { id:37, region:'남부', type:'order', approx:false,
+    date:'2026-04-09', sku:'9300000003184', cat:'MD',
+    name:'다양령 DTR 주차알림판 키체인',
+    orderDate:{중부:'',남부:'2026.04.09'}, remark:'', altSku:'' },
+
+  // ── 기존 공지 ──
+  { id:38, region:'전체', type:'shortage', approx:false,
+    date:'2026-04-04', sku:'9700000000706', cat:'원재료',
+    name:'블라썸 토핑 50G',
+    orderDate:{중부:'',남부:'2026.04.04'}, remark:'재고소진완료(중부권)', altSku:'' },
+  { id:39, region:'중부', type:'order', approx:false,
+    date:'2026-04-06', sku:'11017011', cat:'MD',
+    name:'카페 베로나 250G',
+    orderDate:{중부:'2026.04.06',남부:''}, remark:'', altSku:'' },
+  { id:40, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-06', sku:'9700000000703', cat:'원재료',
+    name:'백도 파우더 500G',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:41, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-06', sku:'9800000012236', cat:'소모품',
+    name:'25 베버카펫 골드브루 소개CC',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:42, region:'중부', type:'shortage', approx:true, approxLabel:'4월 말 입고예정',
+    date:'2026-04-30', sku:'9300000006346', cat:'MD',
+    name:'SS 배꽃 권텐 텀블러 237ml',
+    orderDate:{중부:'',남부:''}, remark:'4월 말 입고예정', altSku:'' },
+  { id:43, region:'남부', type:'order', approx:false,
+    date:'2026-04-20', sku:'9400000001637', cat:'소모품',
+    name:'브라운 푸드트레이 매트',
+    orderDate:{중부:'',남부:'2026.04.20'}, remark:'', altSku:'' },
+  { id:44, region:'남부', type:'shortage', approx:false,
+    date:'2026-04-06', sku:'11100431', cat:'소모품',
+    name:'뉴 리저브 포이어 머그 12OZ',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료, 변경 SKU로 발주요망',
+    altSku:'뉴 리저브 포이어 머그 12OZ (11070892)' },
+  { id:45, region:'남부', type:'shortage', approx:true, approxLabel:'4월 중순 입고예정',
+    date:'2026-04-20', sku:'9400000001101', cat:'소모품',
+    name:'서랍 디바이더 C형',
+    orderDate:{중부:'',남부:''}, remark:'4월 중순 입고예정', altSku:'' },
+  { id:46, region:'남부', type:'order', approx:false,
+    date:'2026-04-06', sku:'9400000000656', cat:'소모품',
+    name:'블랙이글 청소솔 브러쉬 (헤드리필)',
+    orderDate:{중부:'',남부:'2026.04.06'}, remark:'', altSku:'' },
+  { id:47, region:'남부', type:'order', approx:false,
+    date:'2026-04-08', sku:'9700000000686', cat:'원재료',
+    name:'초코웰 800g',
+    orderDate:{중부:'',남부:'2026.04.08'}, remark:'', altSku:'' },
+  { id:48, region:'남부', type:'shortage', approx:false,
+    date:'2026-04-06', sku:'9700000000707', cat:'원재료',
+    name:'고양이 귀 사인판 32PC',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:49, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-06', sku:'9300000003597', cat:'MD',
+    name:'바라이어터리로고 리유저블컵 세트 473ml(3p)',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료(단종)', altSku:'' },
+  { id:50, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-06', sku:'9400000001821', cat:'소모품',
+    name:'철판 트레이',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료(단종)', altSku:'' },
+  { id:51, region:'중부', type:'order', approx:false,
+    date:'2026-04-03', sku:'11019857', cat:'MD',
+    name:'콜롬비아 250G',
+    orderDate:{중부:'2026.04.03',남부:''}, remark:'', altSku:'' },
+  { id:52, region:'중부', type:'shortage', approx:false,
+    date:'2026-04-06', sku:'9800000010063', cat:'소모품',
+    name:'시티&코리아 MD 셀프토커',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료', altSku:'' },
+  { id:53, region:'중부', type:'order', approx:false,
+    date:'2026-04-05', sku:'9300000005837', cat:'Food',
+    name:'그린 올리브',
+    orderDate:{중부:'2026.04.05',남부:''}, remark:'', altSku:'' },
+  { id:54, region:'남부', type:'shortage', approx:false,
+    date:'2026-04-06', sku:'9800000001279', cat:'소모품',
+    name:'번디지털POP',
+    orderDate:{중부:'',남부:''}, remark:'재고소진완료, 대체 SKU 발주 요망',
+    altSku:'세척안내 표지판 (9800000010931)' },
+  { id:55, region:'남부', type:'order', approx:false,
+    date:'2026-04-06', sku:'9300000005864', cat:'MD',
+    name:'한복 베어리스타 키체인(여자)',
+    orderDate:{중부:'',남부:'2026.04.06'}, remark:'', altSku:'' },
+  { id:56, region:'남부', type:'order', approx:false,
+    date:'2026-04-06', sku:'9300000005113', cat:'MD',
+    name:'SS 안녕 경기 텀블러 355ml',
+    orderDate:{중부:'',남부:'2026.04.06'}, remark:'', altSku:'' },
+  { id:57, region:'남부', type:'order', approx:false,
+    date:'2026-04-06', sku:'9300000005115', cat:'MD',
+    name:'SS 안녕 강원 텀블러 355ml',
+    orderDate:{중부:'',남부:'2026.04.06'}, remark:'', altSku:'' },
+  { id:58, region:'전체', type:'shortage', approx:true, approxLabel:'4월 중순 입고예정',
+    date:'2026-04-20', sku:'9300000004961', cat:'MD',
+    name:'호착도 머그 355ml',
+    orderDate:{중부:'',남부:''}, remark:'4월 중순 입고예정', altSku:'' },
+  { id:59, region:'중부', type:'order', approx:false,
+    date:'2026-04-11', sku:'9800000010548', cat:'소모품',
+    name:'신규점 사전점검 고객 초대장',
+    orderDate:{중부:'2026.04.11',남부:''}, remark:'', altSku:'' },
+  { id:60, region:'중부', type:'shortage', approx:true, approxLabel:'6월 중 입고예정',
+    date:'2026-06-15', sku:'9300000005459', cat:'MD',
+    name:'스타벅스 1호점 랫지 머그 414ml',
+    orderDate:{중부:'',남부:''}, remark:'6월 중 입고예정', altSku:'' },
+  { id:61, region:'중부', type:'shortage', approx:true, approxLabel:'4월 초 입고예정',
+    date:'2026-04-05', sku:'9700000000686', cat:'원재료',
+    name:'초코웰 800g',
+    orderDate:{중부:'',남부:''}, remark:'4월 초 입고예정', altSku:'' },
+  { id:62, region:'남부', type:'order', approx:false,
+    date:'2026-04-23', sku:'9400000002074', cat:'소모품',
+    name:'(CF발주)슈가 파우더',
+    orderDate:{중부:'',남부:'2026.04.23'}, remark:'', altSku:'' },
+  { id:63, region:'중부', type:'order', approx:false,
+    date:'2026-04-07', sku:'9400000002074', cat:'소모품',
+    name:'(CF발주)슈가 파우더',
+    orderDate:{중부:'2026.04.07',남부:''}, remark:'소량 선입고 후 4/17 추가입고예정', altSku:'' },
+  { id:64, region:'전체', type:'order', approx:false,
+    date:'2026-04-07', sku:'9400000001688', cat:'소모품',
+    name:'NEW 캠서버 (5 Gallon) 커버',
+    orderDate:{중부:'2026.04.07',남부:'2026.04.09'}, remark:'', altSku:'' },
+  { id:65, region:'전체', type:'order', approx:false,
+    date:'2026-04-06', sku:'9300000005996', cat:'Food',
+    name:'파메 무지방 그릭 요거트 허니',
+    orderDate:{중부:'2026.04.06',남부:''}, remark:'', altSku:'' },
+];
+
+// ══════════════════════════════════════════════════
+// 특이사항 데이터 (날짜별 완전 분리)
+// ══════════════════════════════════════════════════
+const NOTICES = [
+  {
+    date: '2026-04-06',
+    공지일: '2026-04-06',
+    대상: '전 매장 파트너',
+    notices: [
+      {
+        id: 'n1',
+        num: 1,
+        title: '체리블라썸 백도 크림 프라푸치노 원부재료 소진 안내',
+        담당자: '상품구매팀 이다혜 (엠마)',
+        skus: [
+          { sku:'9700000000703', name:'백도 파우더 500G' },
+          { sku:'9700000000706', name:'블라썸 토핑 50G' },
+          { sku:'9700000000707', name:'고양이 귀 사인판 32PC' },
+          { sku:'9700000000708', name:'체리블라썸 스트로베리 소스 1,300G' },
+        ],
+        detail: '상온비축 원부재료 재고 소진',
+        note: '아래 경유 2종 원부재료 발주 시, 상기 4종의 매장 보유 재고에 맞추어 발주 관리',
+        linkedSkus: [
+          { sku:'9700000000704', name:'피치 젤리 500G (냉장)' },
+          { sku:'9700000000705', name:'밀크 푸딩 500G (냉장)' },
+        ],
+      },
+      {
+        id: 'n2',
+        num: 2,
+        title: '딜리버스 로테이션 리드 결품에 따른 대체 운영안 안내',
+        담당자: '',
+        skus: [
+          { sku:'9400000001281', name:'21 딜리버스 로테이션 핫 리드 12/16/20oz' },
+        ],
+        detail: '딜리버스 로테이션 리드의 수입 일정 지연에 따라 한시적으로 Core리드를 활용한 운영안으로 대체됩니다. 매장 내 보유한 딜리버스 로테이션 리드를 우선 사용하고, 더 이상 보유재고가 없는 경우 아래 방법으로 운영합니다.',
+        note: '실링 페이퍼 + Core 리드 + 실링스티커 양쪽 부착 후 제공 (아래 예시 참고)',
+        linkedSkus: [],
+      },
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════════
+const state = { year:2026, month:3, typeFilter:'all', region:'all', page:'cal' };
+const DAYS=['일','월','화','수','목','금','토'];
+function pad(n){return String(n).padStart(2,'0');}
+function ds(y,m,d){return `${y}-${pad(m+1)}-${pad(d)}`;}
+function todayStr(){const t=new Date();return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;}
+
+function inMonth(e){const d=new Date(e.date);return d.getFullYear()===state.year&&d.getMonth()===state.month;}
+function passesType(e){
+  const tf=state.typeFilter;
+  if(tf==='shortage') return e.type==='shortage';
+  if(tf==='order')    return e.type==='order';
+  if(tf==='approx')   return e.approx;
+  return true;
+}
+function passesRegion(e){return state.region==='all'||e.region===state.region;}
+function filtered(){return DATA.filter(e=>inMonth(e)&&passesType(e)&&passesRegion(e));}
+function filteredForDate(d){return filtered().filter(e=>e.date===d);}
+
+// 색상 헬퍼
+function chipCls(e){return e.approx?'ta-c':(e.type==='order'?'to-c':'ts-c');}
+function rRegCls(r){return {전체:'r전체-c',중부:'r중부-c',남부:'r남부-c'}[r]||'';}
+function typeBcls(e){return e.approx?'b-a':(e.type==='order'?'b-o':'b-s');}
+function rBcls(r){return {전체:'b-전체',중부:'b-중부',남부:'b-남부'}[r]||'';}
+function typeLabel(e){return e.approx?'일정미확정':(e.type==='order'?'발주가능일':'결품');}
+function dotColor(e){return e.approx?'var(--amber)':(e.type==='order'?'var(--green)':'var(--red)');}
+function rColor(r){return {전체:'var(--purple)',중부:'var(--blue)',남부:'var(--amber)'}[r]||'var(--txt2)';}
+function rBg(r){return {전체:'var(--purple-bg)',중부:'var(--blue-bg)',남부:'var(--amber-bg)'}[r]||'';}
+
+// ── 페이지 전환 ──
+function setPage(p, el){
+  state.page = p;
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.page-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(p==='notice') renderNoticePage();
+}
+
+// ── 필터 ──
+function setType(t,el){
+  state.typeFilter=t;
+  document.getElementById('f-all').className     ='fchip'+(t==='all'    ?' on-all':'');
+  document.getElementById('f-shortage').className='fchip'+(t==='shortage'?' on-s':'');
+  document.getElementById('f-order').className   ='fchip'+(t==='order'   ?' on-o':'');
+  document.getElementById('f-approx').className  ='fchip'+(t==='approx'  ?' on-a':'');
+  render();
+  if(t!=='all') openPanel(); else closePanel();
+}
+function setRegion(r,el){
+  state.region=r;
+  document.querySelectorAll('.rchip').forEach(c=>c.className='rchip');
+  if(r==='all') el.className='rchip on-all';
+  else el.className=`rchip on-r${r}`;
+  render();
+  if(document.getElementById('sidePanel').classList.contains('open')) renderPanel();
+}
+
+// ── COUNTS ──
+function updateCounts(){
+  const all=DATA.filter(inMonth);
+  const total=all.length;
+  const noticeTotal=NOTICES.filter(n=>{const d=new Date(n.date);return d.getFullYear()===state.year&&d.getMonth()===state.month;}).reduce((s,n)=>s+n.notices.length,0);
+  document.getElementById('cnt-total').textContent   = total;
+  document.getElementById('cnt-notice').textContent  = noticeTotal;
+  document.getElementById('cnt-all').textContent     = total;
+  document.getElementById('cnt-shortage').textContent= all.filter(e=>e.type==='shortage').length;
+  document.getElementById('cnt-order').textContent   = all.filter(e=>e.type==='order').length;
+  document.getElementById('cnt-approx').textContent  = all.filter(e=>e.approx).length;
+  document.getElementById('noticeTotalBadge').textContent = noticeTotal+'건';
+}
+
+// ── CALENDAR ──
+function renderCal(){
+  const {year,month}=state;
+  const firstDay=new Date(year,month,1).getDay();
+  const days=new Date(year,month+1,0).getDate();
+  const today=todayStr();
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+
+  for(let i=0;i<firstDay;i++){
+    const c=document.createElement('div');c.className='dc empty';grid.appendChild(c);
+  }
+  for(let d=1;d<=days;d++){
+    const dstr=ds(year,month,d);
+    const dow=new Date(year,month,d).getDay();
+    const evts=filteredForDate(dstr);
+    const dayNotice=NOTICES.find(n=>n.date===dstr);
+
+    const cell=document.createElement('div');
+    let cls='dc';
+    if(dow===0)cls+=' sun'; if(dow===6)cls+=' sat';
+    if(dstr===today)cls+=' today';
+    if(evts.length>0||(dayNotice))cls+=' hev';
+    if(dayNotice)cls+=' has-notice';
+    cell.className=cls;
+    if(evts.length>0||(dayNotice)) cell.onclick=()=>openDayModal(dstr);
+
+    const numDiv=document.createElement('div');
+    numDiv.className='dn';
+    numDiv.textContent=d;
+    if(dstr===today){const dot=document.createElement('div');dot.className='tdot';numDiv.appendChild(dot);}
+    cell.appendChild(numDiv);
+
+    const MAX=3;
+    evts.slice(0,MAX).forEach(e=>{
+      const chip=document.createElement('div');
+      chip.className=`ec ${chipCls(e)}`;
+      chip.innerHTML=`<div class="cdot"></div><span class="rt ${rRegCls(e.region)}">${e.region}</span><span class="ec-nm">${e.name}</span>`;
+      cell.appendChild(chip);
+    });
+    if(evts.length>MAX){
+      const m=document.createElement('div');m.className='morebtn';
+      m.textContent=`+${evts.length-MAX}건 더`;
+      cell.appendChild(m);
+    }
+
+    // 특이사항 — 캘린더에는 점+라벨만 (별도 탭 유도)
+    if(dayNotice){
+      dayNotice.notices.forEach(n=>{
+        const row=document.createElement('div');
+        row.className='notice-dot-row';
+        row.innerHTML=`<div class="notice-dot"></div><span class="notice-dot-label">📌 ${n.title}</span>`;
+        cell.appendChild(row);
+      });
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+// ── SIDE PANEL ──
+function openPanel(){
+  document.getElementById('sidePanel').classList.add('open');
+  renderPanel();
+}
+function closePanel(){
+  document.getElementById('sidePanel').classList.remove('open');
+}
+function renderPanel(){
+  const labelMap={all:'전체',shortage:'결품',order:'발주가능일',approx:'일정미확정'};
+  document.getElementById('panelTitle').textContent=`${labelMap[state.typeFilter]} — 일자별`;
+  const list=filtered();
+  if(!list.length){
+    document.getElementById('panelBody').innerHTML='<div class="panel-empty">해당 조건의 공지가 없습니다.</div>';
+    return;
+  }
+  const groups={};
+  list.forEach(e=>{if(!groups[e.date])groups[e.date]=[];groups[e.date].push(e);});
+  const sortedDates=Object.keys(groups).sort();
+  const today=todayStr();
+  document.getElementById('panelBody').innerHTML=sortedDates.map(date=>{
+    const items=groups[date];
+    const d=new Date(date);
+    const isToday=date===today;
+    items.sort((a,b)=>['전체','중부','남부'].indexOf(a.region)-['전체','중부','남부'].indexOf(b.region));
+    const itemsHTML=items.map(e=>`
+      <div class="sum-item" onclick="openSingleModal(${e.id})">
+        <div class="sum-dot" style="background:${dotColor(e)}"></div>
+        <div class="sum-region" style="background:${rBg(e.region)};color:${rColor(e.region)}">${e.region}</div>
+        <div class="sum-name">${e.name}</div>
+        ${e.approx?'<div class="approx-badge">미확정</div>':''}
+        <div class="sum-arrow">›</div>
+      </div>`).join('');
+    return `<div class="date-group">
+      <div class="date-group-hdr">
+        <div class="dg-day" style="${isToday?'color:var(--blue)':''}">${d.getDate()}</div>
+        <div class="dg-meta">
+          <div class="dg-ym">${state.year}년 ${d.getMonth()+1}월</div>
+          <div class="dg-dow" style="${isToday?'color:var(--blue)':''}">${DAYS[d.getDay()]}요일${isToday?' · 오늘':''}</div>
+        </div>
+        <div class="dg-count">${items.length}건</div>
+      </div>${itemsHTML}</div>`;
+  }).join('');
+}
+
+// ── 특이사항 페이지 렌더 ──
+function renderNoticePage(){
+  const monthNotices=NOTICES.filter(n=>{const d=new Date(n.date);return d.getFullYear()===state.year&&d.getMonth()===state.month;});
+  if(!monthNotices.length){
+    document.getElementById('noticePageBody').innerHTML=
+      `<div style="text-align:center;padding:60px 0;color:var(--muted);font-size:13px">이번 달 특이사항 공지가 없습니다.</div>`;
+    return;
+  }
+  // 날짜 내림차순 (최신순)
+  const sorted=[...monthNotices].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('noticePageBody').innerHTML=sorted.map(group=>{
+    const d=new Date(group.date);
+    const dateLabel=`${group.date} (${DAYS[d.getDay()]})`;
+    const cardsHTML=group.notices.map(n=>buildNoticeCard(n)).join('');
+    return `<div class="notice-date-group">
+      <div class="notice-date-hdr">
+        <div class="notice-date-pill">
+          <span class="notice-date-txt">${dateLabel}</span>
+          <span class="notice-date-dow">· ${group.대상}</span>
+        </div>
+        <div class="notice-date-line"></div>
+      </div>
+      ${cardsHTML}
+    </div>`;
+  }).join('');
+}
+
+function buildNoticeCard(n){
+  const skuHTML=n.skus.map(s=>`
+    <div class="sku-row"><span class="sku-code">${s.sku}</span><span class="sku-name">${s.name}</span></div>`).join('');
+  const linkedHTML=n.linkedSkus.length?`
+    <div class="ncard-section">
+      <div class="ncard-sec-label">연계 발주 SKU</div>
+      <div class="sku-list">${n.linkedSkus.map(s=>`
+        <div class="sku-row"><span class="sku-code">${s.sku}</span><span class="sku-name">${s.name}</span></div>`).join('')}
+      </div>
+    </div>`:'' ;
+  const managerHTML=n.담당자?`<div class="ncard-manager">👤 ${n.담당자}</div>`:'';
+  return `<div class="ncard">
+    <div class="ncard-header">
+      <div class="ncard-num">${n.num}</div>
+      <div>
+        <div class="ncard-title">${n.title}</div>
+        ${managerHTML}
+      </div>
+    </div>
+    <div class="ncard-body">
+      ${n.skus.length?`<div class="ncard-section">
+        <div class="ncard-sec-label">해당 SKU</div>
+        <div class="sku-list">${skuHTML}</div>
+      </div>`:''}
+      ${n.detail?`<div class="ncard-section">
+        <div class="ncard-sec-label">특이사항</div>
+        <div class="ncard-text">${n.detail}</div>
+      </div>`:''}
+      ${n.note?`<div class="ncard-section">
+        <div class="ncard-sec-label">운영 안내</div>
+        <div class="ncard-warn">${n.note}</div>
+      </div>`:''}
+      ${linkedHTML}
+    </div>
+  </div>`;
+}
+
+// ── MODAL ──
+function buildCard(e){
+  const rows=[];
+  const dates=[];
+  if(e.orderDate['중부']) dates.push(`<b>중부권</b> ${e.orderDate['중부']}`);
+  if(e.orderDate['남부']) dates.push(`<b>남부권</b> ${e.orderDate['남부']}`);
+  if(dates.length) rows.push(`<div class="drow"><div class="drl">발주가능일</div><div class="drv g">${dates.join('&nbsp;/&nbsp;')}</div></div>`);
+  if(e.remark)     rows.push(`<div class="drow"><div class="drl">특이사항</div><div class="drv">${e.remark}</div></div>`);
+  if(e.altSku)     rows.push(`<div class="drow"><div class="drl">대체 SKU</div><div class="drv"><span class="a"><b>${e.altSku}</b></span></div></div>`);
+  rows.push(`<div class="drow"><div class="drl">카테고리</div><div class="drv">${e.cat}</div></div>`);
+  const warn=e.approx?`<div class="approx-warn">⚠️ <b>날짜 미확정</b> — ${e.approxLabel}. 정확한 일자는 추후 공지 예정입니다.</div>`:'';
+  return `<div class="dcard">
+    <div class="dcard-top">
+      <span class="badge ${typeBcls(e)}">${typeLabel(e)}</span>
+      <span class="badge ${rBcls(e.region)}">${e.region}권역</span>
+      <div class="dcard-info"><div class="dcard-nm">${e.name}</div><div class="dcard-sku">SKU ${e.sku}</div></div>
+    </div>
+    <div class="drows">${rows.join('')}</div>${warn}
+  </div>`;
+}
+
+function openDayModal(dstr){
+  const d=new Date(dstr);
+  const evts=filteredForDate(dstr);
+  document.getElementById('mTitle').textContent=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
+  document.getElementById('mSub').textContent=`총 ${evts.length}건`;
+  const gr전체=evts.filter(e=>e.region==='전체');
+  const gr중부 =evts.filter(e=>e.region==='중부');
+  const gr남부 =evts.filter(e=>e.region==='남부');
+  let html='';
+  if(gr전체.length) html+=`<div class="sec-hdr">전체 권역 (${gr전체.length}건)</div>${gr전체.map(buildCard).join('')}`;
+  if(gr중부.length)  html+=`<div class="sec-hdr">중부권 (${gr중부.length}건)</div>${gr중부.map(buildCard).join('')}`;
+  if(gr남부.length)  html+=`<div class="sec-hdr">남부권 (${gr남부.length}건)</div>${gr남부.map(buildCard).join('')}`;
+  document.getElementById('mBody').innerHTML=html||`<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px">공지 없음</div>`;
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('modal').scrollTop=0;
+}
+
+function openSingleModal(id){
+  const e=DATA.find(x=>x.id===id);if(!e)return;
+  const d=new Date(e.date);
+  document.getElementById('mTitle').textContent=e.name;
+  document.getElementById('mSub').textContent=`${e.date} (${DAYS[d.getDay()]}) · SKU ${e.sku}`;
+  document.getElementById('mBody').innerHTML=buildCard(e);
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('modal').scrollTop=0;
+}
+
+function closeOv(ev){if(ev.target===document.getElementById('overlay'))closeModalDirect();}
+function closeModalDirect(){document.getElementById('overlay').classList.remove('on');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModalDirect();});
+
+function render(){
+  document.getElementById('monthLabel').textContent=`${state.year}.${pad(state.month+1)}`;
+  updateCounts();
+  renderCal();
+  if(document.getElementById('sidePanel').classList.contains('open')) renderPanel();
+}
+
+document.getElementById('prevBtn').onclick=()=>{state.month--;if(state.month<0){state.month=11;state.year--;}render();};
+document.getElementById('nextBtn').onclick=()=>{state.month++;if(state.month>11){state.month=0;state.year++;}render();};
+
+render();
+</script>
+</body>
+</html>
